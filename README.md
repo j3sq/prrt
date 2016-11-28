@@ -3,7 +3,7 @@ PRRT is built on the ideas presented in:
 - Blanco, Jose Luis, Mauro Bellone, and Antonio Gimenez-Fernandez. [TP-Space RRT-Kinematic Path Planning of Non-Holonomic Any-Shape Vehicles][TP-RRT] International Journal of Advanced Robotic Systems 12 (2015)
 - [MRPT][] RRT implementation.
 
-implementation is based on MRPT source code avaiable at <https://github.com/MRPT/mrpt>
+implementation is based on MRPT source code available at <https://github.com/MRPT/mrpt>
 
 ## Requirments:
 - Python 3.x
@@ -11,7 +11,7 @@ implementation is based on MRPT source code avaiable at <https://github.com/MRPT
 - [matplotlib][]
 - [SortedDict][]
 
-Most scintific python distributions have these packages bundled already. This work is developed using [Anaconda][] 
+Most scientific python distributions have these packages bundled already. This work is developed using [Anaconda][]
 
 
 ## Usage:
