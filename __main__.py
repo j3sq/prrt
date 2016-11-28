@@ -37,7 +37,8 @@ if rebuild_tables or not os.path.isfile('./prrt.pkl'):
     helper.save_object(planner, './prrt.pkl')
 else:
     planner = helper.load_object('./prrt.pkl')  # type: Planner
-# Hack: exclude the backward cptg for faster time to solution
+
+# Hack: exclude the backward cptg for quicker results
 planner._ptgs.pop()
 
 # Set initial pose and goal pose
