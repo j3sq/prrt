@@ -76,6 +76,7 @@ class Tree(object):
             y = world.y_to_iy(node.pose.y)
             ax.plot(x, y, 'bx')
         ax.plot(world.x_to_ix(goal.x), world.y_to_iy(goal.y), '+r')
+        plt.savefig('./out/tree.png')
         plt.show()
 
 
@@ -118,7 +119,7 @@ class Planner(object):
         return obs_TP
 
     def solve(self, init_pose: PoseR2S1, goal_pose: PoseR2S1, goal_dist_tolerance=1.,
-              goal_ang_tolerance=np.deg2rad(30)):
+              goal_ang_tolerance=np.deg2rad(360)):
         assert self.world is not None, 'load_world_mmap must be called first'
         self._init_pose = init_pose
         self._goal_pose = goal_pose
@@ -153,7 +154,7 @@ class Planner(object):
                     new_pose = ptg_nearest_pose + new_pose_rel  # type: PoseR2S1
                     accept_this_node = True
                     goal_dist = new_pose.distance_2d(goal_pose)
-                    goal_ang = helper.angle_distance(new_pose.theta, goal_pose.theta)
+                    goal_ang = abs(helper.angle_distance(new_pose.theta, goal_pose.theta))
                     is_acceptable_goal = goal_dist < goal_dist_tolerance and goal_ang < goal_ang_tolerance
                     new_nearest_node = None  # type: Node
                     if not is_acceptable_goal:
@@ -180,7 +181,7 @@ class Planner(object):
                 print(new_state_node.pose, ptg_d_min)
 
                 goal_dist = best_edge.end_pose.distance_2d(goal_pose)
-                goal_ang = helper.angle_distance(best_edge.end_pose.theta, goal_pose.theta)
+                goal_ang = abs(helper.angle_distance(best_edge.end_pose.theta, goal_pose.theta))
                 is_acceptable_goal = goal_dist < goal_dist_tolerance and goal_ang < goal_ang_tolerance
                 min_goal_dist_yet = min(goal_dist, min_goal_dist_yet)
                 if is_acceptable_goal:
@@ -208,7 +209,7 @@ class Planner(object):
             start_pose = edge.parent.pose.copy()
             color = 'b'
             vertex_count = len(vehicle.shape)
-            for d in np.arange(0., edge.d, 0.1):
+            for d in np.arange(0., edge.d, 0.2):
                 ax.matshow(self.world.omap, cmap=plt.cm.gray_r, origin='lower')
                 c_point = edge.ptg.get_cpoint_at_d(d, edge.k)
                 current_pose = start_pose + c_point.pose

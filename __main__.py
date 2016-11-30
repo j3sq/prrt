@@ -42,8 +42,6 @@ else:
 planner._ptgs.pop()
 
 # Set initial pose and goal pose
-init_pose = PoseR2S1(10, 60, 0.0 * np.pi)
-goal_pose = PoseR2S1(55, 10, -3./4 * np.pi)
 init_pose = PoseR2S1(80, 60, 0.0 * np.pi)
 goal_pose = PoseR2S1(55, 10, -3./4 * np.pi)
 planner.solve(init_pose, goal_pose)
@@ -52,4 +50,9 @@ planner.solve(init_pose, goal_pose)
 if plot_tree:
     planner.tree.plot_nodes(planner.world, goal_pose)
 if plot_trajectory_frames:
+    # delete existing frames (if any)
+    file_list = [f for f in os.listdir('./out') if f.endswith('.png') and f.startswith('frame')]
+    for f in file_list:
+        os.remove('./out/'+f)
     planner.trace_solution(car, goal_pose)
+

@@ -1,5 +1,12 @@
-# solution frames
-/out/frame*.png
+# solution frames and movies
+out/
+
+# PyCharm directory
+.idea/
+
+# vs code directory
+.vs/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

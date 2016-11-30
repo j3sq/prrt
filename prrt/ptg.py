@@ -53,7 +53,6 @@ class PTG(metaclass=ABCMeta):
         delta = alpha + self._vehicle.alpha_max
         return int(np.rint(delta / self._alpha_resolution))
 
-
     @abstractmethod
     def inverse_WS2TP(self, p: PoseR2S1, tolerance=0.1) -> (bool, int, float):
         pass
@@ -162,7 +161,7 @@ class CPTG(PTG):
                             self.obstacle_grid.update_cell(x_idx - 1, y_idx, k, c_point.d)
                             self.obstacle_grid.update_cell(x_idx, y_idx - 1, k, c_point.d)
                             self.obstacle_grid.update_cell(x_idx - 1, y_idx - 1, k, c_point.d)
-            print('{0} out of {1} complete!'.format(k+1, len(self.idx_to_alpha)))
+            print('{0} out of {1} complete!'.format(k + 1, len(self.idx_to_alpha)))
         print('Completed building obstacle grid for {0}'.format(self.name))
 
     def inverse_WS2TP(self, p: PoseR2S1, tolerance=0.1) -> (bool, int, float):
