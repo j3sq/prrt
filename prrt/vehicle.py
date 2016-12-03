@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from prrt.primitive import PointR2, PoseR2S1
 from typing import Tuple, List
 import numpy as np
+import math
 
 
 class Vehicle(metaclass=ABCMeta):
@@ -38,8 +39,8 @@ class Vehicle(metaclass=ABCMeta):
         result = []
         for vertex in self.shape:
             point = PointR2()
-            point.x = pose.x + np.cos(pose.theta) * vertex.x - np.sin(pose.theta) * vertex.y
-            point.y = pose.y + np.sin(pose.theta) * vertex.x + np.cos(pose.theta) * vertex.y
+            point.x = pose.x + math.cos(pose.theta) * vertex.x - math.sin(pose.theta) * vertex.y
+            point.y = pose.y + math.sin(pose.theta) * vertex.x + math.cos(pose.theta) * vertex.y
             result.append(point)
         return result
 
@@ -90,7 +91,6 @@ class ArticulatedVehicle(Vehicle):
         self._trailer_w = trailer_w
         self._trailer_l = trailer_l
         self._pivot = pivot
-
 
     @property
     def phi(self):

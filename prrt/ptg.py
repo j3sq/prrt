@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import prrt.helper as helper
 from typing import List
 from prrt.grid import ObstacleGrid, CPointsGrid
+import math
 
 
 class PTG(metaclass=ABCMeta):
@@ -99,8 +100,8 @@ class CPTG(PTG):
                 #     v += self._K * a * self._delta_t
                 #     if abs(v) > self._vehicle.v_max:
                 #         v = np.sign(v) * self._vehicle.v_max
-                pose.x += np.cos(pose.theta) * v * self._delta_t
-                pose.y += np.sin(pose.theta) * v * self._delta_t
+                pose.x += math.cos(pose.theta) * v * self._delta_t
+                pose.y += math.sin(pose.theta) * v * self._delta_t
                 pose.theta += w * self._delta_t
                 rotation += w * self._delta_t
                 v_tp_space = np.sqrt(v * v + (w * turning_radius) * (w * turning_radius))

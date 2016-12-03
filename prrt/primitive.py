@@ -1,6 +1,7 @@
 import numpy as np
 import prrt.helper as helper
 from typing import List, Tuple
+import math
 
 
 class PointR2(object):
@@ -9,26 +10,11 @@ class PointR2(object):
     """
 
     def __init__(self, x=0., y=0.):
-        self._position = np.array([x, y], dtype=float)
+        self.x = x
+        self.y = y
 
     def __str__(self):
-        return '({0[0]:+.2f},{0[1]:+.2f})'.format(self._position)
-
-    @property
-    def x(self) -> float:
-        return self._position[0]
-
-    @x.setter
-    def x(self, value: float):
-        self._position[0] = value
-
-    @property
-    def y(self) -> float:
-        return self._position[1]
-
-    @y.setter
-    def y(self, value: float):
-        self._position[1] = value
+        return '({0:+.2f},{1:+.2f})'.format(self.x, self.y)
 
 
 class PoseR2S1(object):
@@ -37,80 +23,57 @@ class PoseR2S1(object):
     """
 
     def __init__(self, x=0., y=0., theta=0.0):
-        self.pose = np.array([x, y, theta], dtype=float)
+        self.x = x
+        self.y = y
+        self.theta = theta
 
     def __str__(self):
         return '({0:+.2f},{1:+.2f},{2:+.2f})'.format(self.x, self.y, np.rad2deg(self.theta))
 
     def __add__(self, other):
         result = PoseR2S1()
-        result.x = self.x + other.x * np.cos(self.theta) - other.y * np.sin(self.theta)
-        result.y = self.y + other.x * np.sin(self.theta) + other.y * np.cos(self.theta)
+        result.x = self.x + other.x * math.cos(self.theta) - other.y * math.sin(self.theta)
+        result.y = self.y + other.x * math.sin(self.theta) + other.y * math.cos(self.theta)
         result.theta = helper.wrap_to_npi_pi(self.theta + other.theta)
         return result
 
     def __sub__(self, other):
         result = PoseR2S1()
-        result.x = (self.x - other.x) * np.cos(other.theta) + (self.y - other.y) * np.sin(other.theta)
-        result.y = -(self.x - other.x) * np.sin(other.theta) + (self.y - other.y) * np.cos(other.theta)
+        result.x = (self.x - other.x) * math.cos(other.theta) + (self.y - other.y) * math.sin(other.theta)
+        result.y = -(self.x - other.x) * math.sin(other.theta) + (self.y - other.y) * math.cos(other.theta)
         result.theta = helper.wrap_to_npi_pi(self.theta - other.theta)
         return result
 
     def __neg__(self):
         result = PoseR2S1()
-        result.x = -self.x * np.cos(self.theta) - self.y * np.sin(self.theta)
-        result.y = self.x * np.sin(self.theta) - self.y * np.cos(self.theta)
+        result.x = -self.x * math.cos(self.theta) - self.y * math.sin(self.theta)
+        result.y = self.x * math.sin(self.theta) - self.y * math.cos(self.theta)
         result.theta = - self.theta
         return result
 
     def diff(self, other):
-        result_pose = self.pose - other.pose
-        result_pose_r2s1 = PoseR2S1()
-        result_pose_r2s1.pose = result_pose
-        result_pose_r2s1.theta = helper.wrap_to_npi_pi(result_pose_r2s1.theta)
-        return result_pose_r2s1
+        result = PoseR2S1(self.x - other.x, self.y - other.y, helper.wrap_to_npi_pi(self.thta - other.theta))
+        return result
 
     def copy_from(self, other):
-        self.pose = np.copy(other.pose)
+        self.x = other.x
+        self.y = other.y
+        self.theta = other.theta
 
     def copy(self):
         return PoseR2S1(self.x, self.y, self.theta)
 
     def compose_point(self, p: PointR2) -> PointR2:
-        gx = self.x + p.x * np.cos(self.theta) - p.y * np.sin(self.theta)
-        gy = self.y + p.x * np.sin(self.theta) + p.y * np.cos(self.theta)
+        gx = self.x + p.x * math.cos(self.theta) - p.y * math.sin(self.theta)
+        gy = self.y + p.x * math.sin(self.theta) + p.y * math.cos(self.theta)
         return PointR2(gx, gy)
 
     def distance_2d(self, p) -> float:
         return np.sqrt((p.x - self.x) ** 2 + (p.y - self.y) ** 2)
 
     @property
-    def x(self) -> float:
-        return self.pose[0]
-
-    @property
     def norm(self):
-        return np.sqrt(self.pose[0] * self.pose[0] + self.pose[1] * self.pose[1])
-
-    @x.setter
-    def x(self, value: float):
-        self.pose[0] = value
-
-    @property
-    def y(self) -> float:
-        return self.pose[1]
-
-    @y.setter
-    def y(self, value: float):
-        self.pose[1] = value
-
-    @property
-    def theta(self) -> float:
-        return self.pose[2]
-
-    @theta.setter
-    def theta(self, value: float):
-        self.pose[2] = helper.wrap_to_npi_pi(value)
+        return np.sqrt(self.x ** 2 + self.y ** 2)
 
 
 class PoseR2S2(object):

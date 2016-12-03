@@ -119,7 +119,7 @@ class Planner(object):
         return obs_TP
 
     def solve(self, init_pose: PoseR2S1, goal_pose: PoseR2S1, goal_dist_tolerance=1.,
-              goal_ang_tolerance=np.deg2rad(360)):
+              goal_ang_tolerance=np.deg2rad(180)):
         assert self.world is not None, 'load_world_mmap must be called first'
         self._init_pose = init_pose
         self._goal_pose = goal_pose
