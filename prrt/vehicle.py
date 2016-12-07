@@ -1,8 +1,9 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from prrt.primitive import PointR2, PoseR2S1
 from typing import Tuple, List
 import numpy as np
 import math
+from prrt.grid import WorldGrid
 
 
 class Vehicle(metaclass=ABCMeta):
@@ -24,6 +25,7 @@ class Vehicle(metaclass=ABCMeta):
         self.w_max = w_max
         self.shape = ()  # type: Tuple[PointR2]
         self.alpha_resolution = np.deg2rad(5)
+        self.pose = PoseR2S1(0., 0., 0.)
 
     def set_vertices(self, polygon: Tuple[PointR2]):
         """
@@ -44,6 +46,24 @@ class Vehicle(metaclass=ABCMeta):
             result.append(point)
         return result
 
+    @abstractmethod
+    def execute_motion(self, K: float, w: float, dt: float) -> PoseR2S1:
+        pass
+
+    @abstractmethod
+    def plot(self, axes, world: WorldGrid, pose: PoseR2S1, color='b'):
+        pass
+
+    @abstractproperty
+    @property
+    def phi(self):
+        return float('nan')
+
+    @abstractproperty
+    @phi.setter
+    def phi(self, angle: float):
+        pass
+
 
 class Car(Vehicle):
     """
@@ -53,6 +73,33 @@ class Car(Vehicle):
     def set_vertices(self, vertices: Tuple[PointR2]):
         assert len(vertices) == 4, '4 vertices expected, received {0}'.format(len(vertices))
         super(Car, self).set_vertices(vertices)
+
+    def execute_motion(self, K: float, w: float, dt: float):
+        self.pose.x += math.cos(self.pose.theta) * K * self.v_max * dt
+        self.pose.y += math.sin(self.pose.theta) * K * self.v_max * dt
+        self.pose.theta += w * dt
+        return self.pose
+
+    def plot(self, axes, world: WorldGrid, pose: PoseR2S1, color='b'):
+        vertex_count = 4
+        vertices = self.get_vertices_at_pose(pose)
+        for j in range(vertex_count):
+            a = vertices[j % vertex_count]
+            b = vertices[(j + 1) % vertex_count]
+            if world is None:
+                axes.plot([a.x, b.x], [a.y, b.y], color)
+            else:
+                ia = PointR2(world.x_to_ix(a.x), world.y_to_iy(a.y))
+                ib = PointR2(world.x_to_ix(b.x), world.y_to_iy(b.y))
+                axes.plot([ia.x, ib.x], [ia.y, ib.y], color)
+
+    @property
+    def phi(self):
+        return float('nan')
+
+    @phi.setter
+    def phi(self, angle: float):
+        pass
 
 
 class ArticulatedVehicle(Vehicle):
@@ -100,9 +147,67 @@ class ArticulatedVehicle(Vehicle):
     def phi(self, angle: float):
         self._phi = angle
         # adjust the trailer vertices based on the new phi
-        self._pivot.theta = self._phi
+        self._pivot.theta = -self._phi
         p6 = self._pivot.compose_point(PointR2(0, -self._trailer_w / 2.))
         p7 = self._pivot.compose_point(PointR2(0, self._trailer_w / 2.))
         p8 = self._pivot.compose_point(PointR2(-self._trailer_l, self._trailer_w / 2.))
         p9 = self._pivot.compose_point(PointR2(-self._trailer_l, -self._trailer_w / 2.))
         self.shape = (*self.shape[:6], p6, p7, p8, p9)
+
+    def execute_motion(self, K: int, w: float, dt: float) -> PoseR2S1:
+        if K == 1:
+            (self.pose, self._phi) = self._sim_move_forward(self.pose, w, self._phi, dt)
+        elif K == -1:
+            (rev_pose, rev_phi) = self._sim_reverse(self.pose, self._phi)
+            (new_pose, new_phi) = self._sim_move_forward(rev_pose, w, rev_phi, dt)
+            (self.pose, self._phi) = self._sim_reverse(new_pose, new_phi)
+        return self.pose
+
+    def _sim_reverse(self, init_pose: PoseR2S1, phi: float):
+        x_rev = init_pose.x - (self._trailer_l / 2.) * math.cos(init_pose.theta) - \
+                (self._head_l / 2 + self._link_l) * math.cos(init_pose.theta + phi)
+        y_rev = init_pose.y - (self._trailer_l / 2) * math.sin(init_pose.theta) - \
+                (self._head_l / 2 + self._link_l) * math.sin(init_pose.theta + phi)
+        theta_rev = init_pose.theta + phi + np.pi
+        phi_rev = -phi
+        return PoseR2S1(x_rev, y_rev, theta_rev), phi_rev
+
+    def _sim_move_forward(self, init_pose: PoseR2S1, w: float, phi: float, dt: float) -> (PoseR2S1, float):
+        final_pose = PoseR2S1()
+        final_pose.x = init_pose.x + self.v_max * dt * math.cos(init_pose.theta)
+        final_pose.y = init_pose.y + self.v_max * dt * math.sin(init_pose.theta)
+        final_pose.theta = init_pose.theta + w * dt
+        final_pose_phi = phi - dt * ((self.v_max / (self._trailer_l / 2)) * math.sin(phi) - (
+            (self._head_l / 2 + self._link_l) * w / (self._trailer_l / 2)) * math.cos(phi) - w)
+
+        return final_pose, final_pose_phi
+
+    def plot(self, axes, world: WorldGrid, pose: PoseR2S1, color='b'):
+        vertices = self.get_vertices_at_pose(pose)
+        for j in range(len(vertices) - 1):
+            a = vertices[j]
+            b = vertices[j + 1]
+            if world is None:
+                axes.plot([a.x, b.x], [a.y, b.y], color)
+            else:
+                ia = PointR2(world.x_to_ix(a.x), world.y_to_iy(a.y))
+                ib = PointR2(world.x_to_ix(b.x), world.y_to_iy(b.y))
+                axes.plot([ia.x, ib.x], [ia.y, ib.y], color)
+
+        a = vertices[3]
+        b = vertices[0]
+        if world is None:
+            axes.plot([a.x, b.x], [a.y, b.y], color)
+        else:
+            ia = PointR2(world.x_to_ix(a.x), world.y_to_iy(a.y))
+            ib = PointR2(world.x_to_ix(b.x), world.y_to_iy(b.y))
+            axes.plot([ia.x, ib.x], [ia.y, ib.y], color)
+
+        a = vertices[9]
+        b = vertices[6]
+        if world is None:
+            axes.plot([a.x, b.x], [a.y, b.y], color)
+        else:
+            ia = PointR2(world.x_to_ix(a.x), world.y_to_iy(a.y))
+            ib = PointR2(world.x_to_ix(b.x), world.y_to_iy(b.y))
+            axes.plot([ia.x, ib.x], [ia.y, ib.y], color)

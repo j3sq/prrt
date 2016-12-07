@@ -93,76 +93,38 @@ class CPoint(object):
     Holds data about a trajectory point in configuration space
     """
 
-    def __init__(self, pose: PoseR2S1 = None, t: float = 0., d: float = 0., v: float = 0., w: float = 0.):
-        self._pose = pose
-        self._t = t
-        self._d = d
-        self._v = v
-        self._w = w
-
-    @property
-    def pose(self) -> PoseR2S1:
-        return self._pose
-
-    @pose.setter
-    def pose(self, pose: PoseR2S1):
-        self._pose = pose
-
-    @property
-    def t(self) -> float:
-        return self._t
-
-    @t.setter
-    def t(self, t: float):
-        self._t = t
-
-    @property
-    def d(self) -> float:
-        return self._d
-
-    @d.setter
-    def d(self, d: float):
-        self._d = d
-
-    @property
-    def v(self) -> float:
-        return self._v
-
-    @v.setter
-    def v(self, v: float):
-        self._v = v
-
-    @property
-    def w(self) -> float:
-        return self._w
-
-    @w.setter
-    def w(self, w: float):
-        self._w = w
+    def __init__(self, pose: PoseR2S1 = None, t: float = 0., d: float = 0., v: float = 0., w: float = 0.,
+                 phi: float = 0.):
+        self.pose = pose
+        self.t = t
+        self.d = d
+        self.v = v
+        self.w = w
+        self.phi = phi
 
     @property
     def x(self) -> float:
-        return self._pose.x
+        return self.pose.x
 
     @x.setter
     def x(self, x: float):
-        self._pose.x = x
+        self.pose.x = x
 
     @property
     def y(self) -> float:
-        return self._pose.y
+        return self.pose.y
 
     @y.setter
     def y(self, y: float):
-        self._pose.y = y
+        self.pose.y = y
 
     @property
     def theta(self) -> float:
-        return self._pose.theta
+        return self.pose.theta
 
     @theta.setter
     def theta(self, theta: float):
-        self._pose.theta = theta
+        self.pose.theta = theta
 
 
 def get_bounding_box(points: List[PointR2]) -> Tuple[PointR2]:

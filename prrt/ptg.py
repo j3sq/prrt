@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from prrt.vehicle import Vehicle
+from prrt.vehicle import Vehicle, ArticulatedVehicle
 from prrt.primitive import PoseR2S1, CPoint, PointR2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -88,21 +88,16 @@ class CPTG(PTG):
             t = 0.
             n = 0
             v = self._K * self._vehicle.v_max
+            self._vehicle.pose = PoseR2S1(0., 0., 0.)
+            self._vehicle.phi = 0.
             dist = 0.
-            pose = PoseR2S1(0, 0, 0)
             last_pose = PoseR2S1(0, 0, 0)
             w = (alpha / np.pi) * self._vehicle.w_max
             rotation = 0.  # same as pose.theta but defined over the range [0: 2PI)
             self.idx_to_alpha.append(alpha)
             points = []  # type: List[CPoint]
             while abs(rotation) < 1.95 * np.pi and t < self._t_max and dist < self._d_max and n < self._n_max:
-                # if abs(v) < self._vehicle.v_max:
-                #     v += self._K * a * self._delta_t
-                #     if abs(v) > self._vehicle.v_max:
-                #         v = np.sign(v) * self._vehicle.v_max
-                pose.x += math.cos(pose.theta) * v * self._delta_t
-                pose.y += math.sin(pose.theta) * v * self._delta_t
-                pose.theta += w * self._delta_t
+                pose = self._vehicle.execute_motion(self._K, w, self._delta_t)
                 rotation += w * self._delta_t
                 v_tp_space = np.sqrt(v * v + (w * turning_radius) * (w * turning_radius))
                 dist += v_tp_space * self._delta_t
@@ -112,7 +107,7 @@ class CPTG(PTG):
                 dist_max = max(dist1, dist2)
                 t += self._delta_t
                 if dist_max > min_dist:
-                    points.append(CPoint(pose.copy(), t, dist, v, w))
+                    points.append(CPoint(pose.copy(), t, dist, v, w, self._vehicle.phi))
                     last_pose.copy_from(pose)
                     n += 1
             self.c_points.append(points)
@@ -146,6 +141,8 @@ class CPTG(PTG):
         for k in range(len(self.idx_to_alpha)):
             c_points_at_k = self.c_points[k]
             for c_point in c_points_at_k:
+                if type(self._vehicle) is ArticulatedVehicle:
+                    self._vehicle.phi = c_point.phi
                 shape = self._vehicle.get_vertices_at_pose(c_point.pose)
                 shape_bb = get_bounding_box(shape)
                 x_idx_min = max(0, self.obstacle_grid.x_to_ix(shape_bb[0].x))
@@ -211,3 +208,66 @@ class CPTG(PTG):
             return d * self.distance_ref
         else:
             return float('inf')
+
+
+class ACPTG(CPTG):
+    """
+        circular PTG for articulated vehicles
+    """
+    from prrt.vehicle import ArticulatedVehicle
+
+    def __init__(self, size: float, vehicle: ArticulatedVehicle, resolution: float, K: int, init_phi: float):
+        self.init_phi = init_phi
+        super(ACPTG, self).__init__(size, vehicle, resolution,K)
+
+    def build_cpoints(self):
+        """
+        Builds a distance map for the given PTG, map size, resolution and vehicle
+        """
+        k_theta = 1.
+        min_dist = 0.015
+        turning_radius = 0.1
+        print('Starting building cpoints for {0}'.format(self.name))
+        for alpha in np.arange(-self._vehicle.alpha_max, self._vehicle.alpha_max + self._alpha_resolution,
+                               self._alpha_resolution):
+            t = 0.
+            n = 0
+            v = self._K * self._vehicle.v_max
+            self._vehicle.pose = PoseR2S1(0., 0., 0.)
+            self._vehicle.phi = self.init_phi
+            dist = 0.
+            last_pose = PoseR2S1(0, 0, 0)
+            w = (alpha / np.pi) * self._vehicle.w_max
+            rotation = 0.  # same as pose.theta but defined over the range [0: 2PI)
+            self.idx_to_alpha.append(alpha)
+            points = []  # type: List[CPoint]
+            while abs(rotation) < 1.95 * np.pi and t < self._t_max and dist < self._d_max and n < self._n_max:
+                pose = self._vehicle.execute_motion(self._K, w, self._delta_t)
+                rotation += w * self._delta_t
+                v_tp_space = np.sqrt(v * v + (w * turning_radius) * (w * turning_radius))
+                dist += v_tp_space * self._delta_t
+                delta_pose = pose - last_pose
+                dist1 = delta_pose.norm
+                dist2 = abs(delta_pose.theta) * k_theta
+                dist_max = max(dist1, dist2)
+                t += self._delta_t
+                if dist_max > min_dist:
+                    points.append(CPoint(pose.copy(), t, dist, v, w, self._vehicle.phi))
+                    last_pose.copy_from(pose)
+                    n += 1
+            self.c_points.append(points)
+        print('Completed building cpoints for {0}'.format(self.name))
+
+    def plot(self, alpha: float):
+        k = self.alpha2idx(alpha)
+        c_points_at_k = self.c_points[k]
+        fig, ax = plt.subplots()
+        i = 0
+        for c_point in c_points_at_k:
+            ax.plot(-20, -20)
+            ax.plot(20, 20)
+            self._vehicle.phi = c_point.phi
+            self._vehicle.plot(ax, None, c_point.pose)
+            plt.savefig('./out/c_point_at_{0:.0f}_{1:04d}.png'.format(np.rad2deg(alpha), i))
+            ax.cla()
+            i += 1
