@@ -37,7 +37,7 @@ obs_R : 1.5                             # Multiple of grid_size, only obstacles 
 goal_dist_tolerance : 7.0               # Maximum distance (R2) to admit a candidate goal node (m)
 goal_ang_tolerance : 180                # Maximum heading difference to admit a candidate goal node (deg)
 
-max_count : 5000                        # Planner will abort solving if iteration count exceeds this number
+max_count : 2000                        # Planner will abort solving if iteration count exceeds this number
 plot_tree_file : './out/tree.png'       # A plot of the final tree will be saved at this location,
                                         #  empty value means don't plot
 plot_solution : './out/frame'           # Solution steps plot will be dumped at this location,

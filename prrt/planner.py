@@ -251,7 +251,7 @@ class Planner(object):
         if self.config['plot_tree_file'] != '':
             self.tree.plot_nodes(self.world, goal_pose, self.config['plot_tree_file'])
         if self.config['plot_solution'] != '':
-            self.trace_solution(self.aptgs[0].vehicles, goal_pose, self.config['plot_solution'])
+            self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
 
     def trace_solution(self, vehicle: ArticulatedVehicle, goal: PoseR2S2 = None, file_name='frame'):
         child_node = self.tree.nodes[-1]
@@ -287,7 +287,7 @@ class Planner(object):
                 if goal is not None:
                     ax.plot(self.world.x_to_ix(goal.x), self.world.y_to_iy(goal.y), '+r')
                 print('Saving frame {0}'.format(frame))
-                plt.savefig('./out/{0}{1:04d}.png'.format(file_name, frame))
+                plt.savefig('{0}{1:04d}.png'.format(file_name, frame))
                 # clear the figure for next drawing
                 ax.lines = []
                 frame += 1
