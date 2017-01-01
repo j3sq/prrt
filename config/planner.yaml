@@ -1,0 +1,56 @@
+# Jafar Qutteineh 25-12-2016
+# PRRT Config file
+#
+######################################################################################
+################################### Planner ##########################################
+
+world_map_file : './maps/lot_caseStudy.png'        # Maximum absolute linear velocity (m/s)
+#world_map_file : './maps/lot.png'
+#world_map_file : './maps/lot_A.png'
+world_width : 117.6                           # Map width (m)
+world_height : 68.3                           # Map height (m)
+
+aptg_files :                                 # List of APTGs pickle file
+    - './jar/fwd_captg.pkl'
+    - './jar/bwd_captg.pkl'                     
+
+
+vehicle_config: './vehicle.yaml'        # Vehicle configuration file.
+
+init_pose :                             # Vehicle initial pose
+    x : 80.0                            # Vehicle initial x position (m)
+    y : 60.0                            # Vehicle initial x position (m)
+    theta : 0.0                         # Vehicle initial heading (Deg)
+    phi : 0.0                           # Vehicle initial articulation angle (Deg)
+
+goal_pose :                             # Vehicle goal pose
+    x : 55.0                            # Vehicle goal x position (m)
+    y : 10.0                            # Vehicle goal x position (m)
+    theta : -135.                         # Vehicle goal heading (Deg)
+    phi : 0.0                           # Vehicle goal articulation angle (Deg) - NOT USED!
+
+
+D_max : 2.0                             # Maximum distance between two consecutive nodes
+                                        # Note: Must be less than PTGs grid size
+obs_R : 1.5                             # Multiple of grid_size, only obstacles within a circle
+                                        # (with the robot at it's center and radius = obs_R* grid_size) will be checked. 
+goal_dist_tolerance : 7.0               # Maximum distance (R2) to admit a candidate goal node (m)
+goal_ang_tolerance : 180                # Maximum heading difference to admit a candidate goal node (deg)
+
+max_count : 5000                        # Planner will abort solving if iteration count exceeds this number
+plot_tree_file : './out/tree.png'       # A plot of the final tree will be saved at this location,
+                                        #  empty value means don't plot
+plot_solution : './out/frame'           # Solution steps plot will be dumped at this location,
+                                        #  empty value means don't plot
+    
+# Debugging
+debug_tree_state  : 0                   # Plot the current state of the tree, values:
+                                        #     1 : plot state on every iteration (Warning: will slow down solution)
+                                        #     2 : plot state on every second iteration (Warning: will slow down solution)
+                                        #     3 : plot state on every third  iteration (Warning: will slow down solution)
+                                        #     n : plot state on every nth  iteration (Warning: will slow down solution)
+
+debug_tree_state_file : './out/state'    #  tree_state will be plotted at this location. name will be post-fixed with
+                                        #   iteration number
+
+

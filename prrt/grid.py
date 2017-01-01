@@ -2,12 +2,10 @@ import random
 from abc import ABCMeta
 from pathlib import Path
 from typing import List
-
 import matplotlib.image as mpimg
 import numpy as np
-
 from prrt.helper import INT_MAX
-from prrt.primitive import PoseR2S1, PointR2
+from prrt.primitive import PoseR2S2, PointR2
 
 
 class KDPair(object):
@@ -33,7 +31,7 @@ class Grid(metaclass=ABCMeta):
         self._half_cell_count_y = self._half_cell_count_x
         self._cell_count_x = 2 * self._half_cell_count_x + 1
         self._cell_count_y = self._cell_count_x
-        self._cells = np.empty((self._cell_count_x, self._cell_count_y), dtype=object)
+        self.cells = np.empty((self._cell_count_x, self._cell_count_y), dtype=object)
 
     def x_to_ix(self, x: float) -> int:
         """
@@ -74,7 +72,7 @@ class Grid(metaclass=ABCMeta):
             return None
         if ix < 0 or iy < 0:
             return None
-        return self._cells[iy][ix]
+        return self.cells[iy][ix]
 
     @property
     def cell_count_x(self):
@@ -88,29 +86,36 @@ class Grid(metaclass=ABCMeta):
 class ObstacleGrid(Grid):
     def update_cell(self, ix: int, iy: int, k: int, d: float):
         # if this is the first entry create a new pair and return
-        if self._cells[ix][iy] is None:
-            self._cells[ix][iy] = [KDPair(k, d)]
+        if self.cells[ix][iy] is None:
+            self.cells[ix][iy] = [KDPair(k, d)]
             return
         # Cell already has an entry or more.
         # check if one exist for the same k
-        for k_d_pair in self._cells[ix][iy]:
+        for k_d_pair in self.cells[ix][iy]:
             if k_d_pair.k == k:
                 k_d_pair.d = min(k_d_pair.d, d)
                 return
         # The entry is new for the given k
-        self._cells[ix][iy].append(KDPair(k, d))
+        self.cells[ix][iy].append(KDPair(k, d))
 
 
 class CPointsGrid(Grid):
+    '''
+    CPointsGrid is a data structure used to speed up the retrieval of
+      cpoint at a given location. It holds information about the max and min
+      alpha that causes the vehicle to reach this point. Similarly, it keeps
+      track of the max abd min index of cpoint in a given trajectory. The data will be later used
+      to narrow down search operation for collision detection.
+    '''
     def update_cell(self, ix: int, iy: int, k: int, n: int):
-        if self._cells[ix][iy] is None:
-            self._cells[ix][iy] = (INT_MAX, INT_MAX, 0, 0)
-        k_min, n_min, k_max, n_max = self._cells[ix][iy]
+        if self.cells[ix][iy] is None:
+            self.cells[ix][iy] = (INT_MAX, INT_MAX, 0, 0)
+        k_min, n_min, k_max, n_max = self.cells[ix][iy]
         k_min = min(k_min, k)
         n_min = min(n_min, n)
         k_max = max(k_max, k)
         n_max = max(n_max, n)
-        self._cells[ix][iy] = (k_min, n_min, k_max, n_max)
+        self.cells[ix][iy] = (k_min, n_min, k_max, n_max)
 
 
 class WorldGrid(object):
@@ -168,7 +173,7 @@ class WorldGrid(object):
         """
         return idy * self.y_resolution
 
-    def get_random_pose(self, bias_pose: PoseR2S1 = None, bias=0.05):
+    def get_random_pose(self, bias_pose: PoseR2S2 = None, bias=0.05):
         if bias_pose is not None:
             rand = random.uniform(0, 1)
             if rand <= bias:
@@ -176,7 +181,7 @@ class WorldGrid(object):
         x = random.uniform(0, self.width)
         y = random.uniform(0, self.height)
         theta = random.uniform(-np.pi, np.pi)
-        return PoseR2S1(x, y, theta)
+        return PoseR2S2(x, y, theta)
 
     def build_obstacle_buffer(self):
         for ix in range(self.iwidth):
@@ -186,9 +191,9 @@ class WorldGrid(object):
                     y = self.idx_to_y(iy)
                     self._obstacle_buffer.append(PointR2(x, y))
 
-    def transform_point_cloud(self, ref_pose: PoseR2S1, max_dist):
+    def transform_point_cloud(self, ref_pose: PoseR2S2, max_dist):
         in_region_obstacles = []  # type: List[PointR2]
-        inv_pose = -ref_pose  # type: PoseR2S1
+        inv_pose = -ref_pose  # type: PoseR2S2
         for obstacle in self._obstacle_buffer:
             dx = obstacle.x - ref_pose.x
             dy = obstacle.y - ref_pose.y

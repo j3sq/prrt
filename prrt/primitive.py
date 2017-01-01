@@ -1,7 +1,6 @@
-import numpy as np
 import prrt.helper as helper
 from typing import List, Tuple
-import math
+from math import sin, cos, sqrt, degrees as deg, radians as rad
 
 
 class PointR2(object):
@@ -17,75 +16,73 @@ class PointR2(object):
         return '({0:+.2f},{1:+.2f})'.format(self.x, self.y)
 
 
-class PoseR2S1(object):
+class PoseR2S2(object):
     """
-    define a pose (x,y,theta) in R2 S1 space
+    define a pose (x,y,theta, __phi) in R2 S2 space
+    __phi is the articulation angle of the truck-trailer vehicle
     """
 
-    def __init__(self, x=0., y=0., theta=0.0):
+    def __init__(self, x=0., y=0., theta=0.0, phi=0.0):
         self.x = x
         self.y = y
         self.theta = theta
+        self.phi = phi
 
     def __str__(self):
-        return '({0:+.2f},{1:+.2f},{2:+.2f})'.format(self.x, self.y, np.rad2deg(self.theta))
+        return '({0:+.1f},{1:+.1f},{2:+.1f},{3:+.1f})'.format(self.x, self.y, deg(self.theta), deg(self.phi))
 
     def __add__(self, other):
-        result = PoseR2S1()
-        result.x = self.x + other.x * math.cos(self.theta) - other.y * math.sin(self.theta)
-        result.y = self.y + other.x * math.sin(self.theta) + other.y * math.cos(self.theta)
+        result = PoseR2S2()
+        result.x = self.x + other.x * cos(self.theta) - other.y * sin(self.theta)
+        result.y = self.y + other.x * sin(self.theta) + other.y * cos(self.theta)
         result.theta = helper.wrap_to_npi_pi(self.theta + other.theta)
+        result.phi = other.phi
         return result
 
     def __sub__(self, other):
-        result = PoseR2S1()
-        result.x = (self.x - other.x) * math.cos(other.theta) + (self.y - other.y) * math.sin(other.theta)
-        result.y = -(self.x - other.x) * math.sin(other.theta) + (self.y - other.y) * math.cos(other.theta)
+        result = PoseR2S2()
+        result.x = (self.x - other.x) * cos(other.theta) + (self.y - other.y) * sin(other.theta)
+        result.y = -(self.x - other.x) * sin(other.theta) + (self.y - other.y) * cos(other.theta)
         result.theta = helper.wrap_to_npi_pi(self.theta - other.theta)
+        result.phi = self.phi
         return result
 
     def __neg__(self):
-        result = PoseR2S1()
-        result.x = -self.x * math.cos(self.theta) - self.y * math.sin(self.theta)
-        result.y = self.x * math.sin(self.theta) - self.y * math.cos(self.theta)
+        result = PoseR2S2()
+        result.x = -self.x * cos(self.theta) - self.y * sin(self.theta)
+        result.y = self.x * sin(self.theta) - self.y * cos(self.theta)
         result.theta = - self.theta
+        result.phi = self.phi
         return result
 
     def diff(self, other):
-        result = PoseR2S1(self.x - other.x, self.y - other.y, helper.wrap_to_npi_pi(self.thta - other.theta))
+        result = PoseR2S2(self.x - other.x, self.y - other.y, helper.wrap_to_npi_pi(self.theta - other.theta), self.phi)
         return result
 
     def copy_from(self, other):
         self.x = other.x
         self.y = other.y
         self.theta = other.theta
+        self.phi = other.phi
 
     def copy(self):
-        return PoseR2S1(self.x, self.y, self.theta)
+        return PoseR2S2(self.x, self.y, self.theta, self.phi)
 
     def compose_point(self, p: PointR2) -> PointR2:
-        gx = self.x + p.x * math.cos(self.theta) - p.y * math.sin(self.theta)
-        gy = self.y + p.x * math.sin(self.theta) + p.y * math.cos(self.theta)
+        gx = self.x + p.x * cos(self.theta) - p.y * sin(self.theta)
+        gy = self.y + p.x * sin(self.theta) + p.y * cos(self.theta)
         return PointR2(gx, gy)
 
     def distance_2d(self, p) -> float:
-        return np.sqrt((p.x - self.x) ** 2 + (p.y - self.y) ** 2)
+        return sqrt((p.x - self.x) ** 2 + (p.y - self.y) ** 2)
 
     @property
     def norm(self):
-        return np.sqrt(self.x ** 2 + self.y ** 2)
+        return sqrt(self.x ** 2 + self.y ** 2)
 
-
-class PoseR2S2(object):
-    """
-    define a pose (x,y,theta, phi) in R2 S2 space
-    """
-
-    def __init__(self, x=0., y=0., theta=0.0, phi=0.0):
-        self._pose = np.array([x, y, theta, phi], dtype=float)
-
-    def __str__(self):
-        return '({0[0]:+.2f},{0[1]:+.2f},{0[2]:+.2f},{0[3]:+.2f})'.format(self._pose)
+    @staticmethod
+    def from_dict(d: dict):
+        return PoseR2S2(d['x'], d['y'], rad(d['theta']), rad(d['phi']))
 
 
 class CPoint(object):
@@ -93,76 +90,47 @@ class CPoint(object):
     Holds data about a trajectory point in configuration space
     """
 
-    def __init__(self, pose: PoseR2S1 = None, t: float = 0., d: float = 0., v: float = 0., w: float = 0.):
-        self._pose = pose
-        self._t = t
-        self._d = d
-        self._v = v
-        self._w = w
+    def __init__(self, pose: PoseR2S2 = None, d: float = 0., v: float = 0., alpha: float = 0.):
+        self.pose = pose
+        self.d = d
+        self.v = v
+        self.alpha = alpha
 
-    @property
-    def pose(self) -> PoseR2S1:
-        return self._pose
-
-    @pose.setter
-    def pose(self, pose: PoseR2S1):
-        self._pose = pose
-
-    @property
-    def t(self) -> float:
-        return self._t
-
-    @t.setter
-    def t(self, t: float):
-        self._t = t
-
-    @property
-    def d(self) -> float:
-        return self._d
-
-    @d.setter
-    def d(self, d: float):
-        self._d = d
-
-    @property
-    def v(self) -> float:
-        return self._v
-
-    @v.setter
-    def v(self, v: float):
-        self._v = v
-
-    @property
-    def w(self) -> float:
-        return self._w
-
-    @w.setter
-    def w(self, w: float):
-        self._w = w
+    def __str__(self):
+        return 'd={0:0.1f}, v={1:0.1f}, alpha={2:0.1f}, pose={3}'.format(self.d, self.v, deg(self.alpha),
+                                                                         str(self.pose))
 
     @property
     def x(self) -> float:
-        return self._pose.x
+        return self.pose.x
 
     @x.setter
     def x(self, x: float):
-        self._pose.x = x
+        self.pose.x = x
 
     @property
     def y(self) -> float:
-        return self._pose.y
+        return self.pose.y
 
     @y.setter
     def y(self, y: float):
-        self._pose.y = y
+        self.pose.y = y
 
     @property
     def theta(self) -> float:
-        return self._pose.theta
+        return self.pose.theta
 
     @theta.setter
     def theta(self, theta: float):
-        self._pose.theta = theta
+        self.pose.theta = theta
+
+    @property
+    def phi(self) -> float:
+        return self.pose.phi
+
+    @phi.setter
+    def phi(self, phi: float):
+        self.pose.phi = phi
 
 
 def get_bounding_box(points: List[PointR2]) -> Tuple[PointR2]:
@@ -187,7 +155,32 @@ def polygon_contains_point(polygon: List[PointR2], point: PointR2, bb: Tuple[Poi
     return result
 
 
+def polygon_contains_point_2(polygon: List[PointR2], point: PointR2, bb: Tuple[PointR2] = None) -> bool:
+    # Ref: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#Point on an Edge
+    # Seems to have an issue with edge cases. Currently not used
+    vert_x = [p.x for p in polygon]
+    vert_y = [p.y for p in polygon]
+    n_vert = len(vert_x)
+    i = 0
+    j = n_vert - 1
+    c = True
+    while i < n_vert:
+        if ((vert_y[i] > point.y) != (vert_y[j] > point.y)) and (
+                    point.x < (vert_x[j] - vert_x[i]) * (point.y - vert_y[i]) / (vert_y[j] - vert_y[i]) + vert_x[i]):
+            c = not c
+        j = i
+        i += 1
+    return c
+
+
 def polygon_to_segments(polygon: List[PointR2]) -> List[Tuple[PointR2]]:
+    segments = []
+    for k in range(len(polygon) - 1):
+        segments.append((polygon[k], polygon[k + 1]))
+    return segments
+
+
+def polygon_to_vertices(polygon: List[PointR2]) -> List[Tuple[PointR2]]:
     segments = []
     for k in range(len(polygon) - 1):
         segments.append((polygon[k], polygon[k + 1]))

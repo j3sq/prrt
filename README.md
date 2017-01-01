@@ -5,7 +5,7 @@ PRRT is built on the ideas presented in:
 
 implementation is based on MRPT source code available at <https://github.com/MRPT/mrpt>
 
-## Requirments:
+## Requirements:
 - Python 3.x
 - [numpy][]
 - [matplotlib][]
@@ -15,11 +15,40 @@ Most scientific python distributions have these packages bundled already. This w
 
 
 ## Usage:
-A working example is supplied in \_\_main\_\_
+To run or test the code use the provided runner modules:
+  - vehicle_runner.py : To test basic vehicle functions.
+  - aptg_runner.py : To build APTGs (Articulated PTGs), trace trajectories and more.
+  - planner_runner.py : Solve using prrt.
 
+Running any runner without additional arguments will print help message with details on possible commands and their
+ arguments.
+
+For example:
 In console, cd to prrt folder and run:
-```python
-    python __main__.py
+```shell
+    python aptg_runner.py
+```
+will print:
+```shell
+PTG Runner!
+Usage:
+Run: python aptg_runner.py [command number] [arg1] [arg2] ....
+
+Commands:
+  1: Plot PTG cpoints
+     Arguments:
+       1: Vehicle configuration file
+       2: APTG configuration file
+       3: APTG initial articulation angle in deg
+     Example: python aptg_runner.py 1 ./config/vehicle.yaml ./config/fwd_captg.yaml 20
+
+  2: Trace vehicle trajectory at given initial phi(articulation angle) and alpha(steering angle).
+     Arguments:
+       1: Vehicle configuration file
+        ...
+        ...
+        ...
+        
 ```
 
 
