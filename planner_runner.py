@@ -34,15 +34,10 @@ def main():
         print(traceback.print_exc())
         print_help()
 
-    planner_config_file = yaml.load(sys.argv[1])
-    with open(planner_config_file) as f:
-        config = yaml.load(f)
 
 
 def solve(planner: Planner):
     planner.solve()
-    planner.tree.plot_nodes(planner.world)
-    planner.trace_solution(planner.aptgs[0].vehicle)
 
 
 def print_help():

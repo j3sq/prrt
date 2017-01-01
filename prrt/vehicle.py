@@ -157,3 +157,13 @@ class ArticulatedVehicle(object):
             ia = PointR2(world.x_to_ix(a.x), world.y_to_iy(a.y))
             ib = PointR2(world.x_to_ix(b.x), world.y_to_iy(b.y))
             axes.plot([ia.x, ib.x], [ia.y, ib.y], color)
+
+
+class ArticulatedVehicleFactory(object):
+    @staticmethod
+    def build_av(config: dict) -> ArticulatedVehicle:
+        module_name = config['module_name']
+        class_name = config['class_name']
+        av_module = __import__(module_name, fromlist=[class_name])
+        av_class = getattr(av_module, class_name)  # type: Type[ArticulatedVehicle]
+        return av_class(config)

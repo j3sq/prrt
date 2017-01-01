@@ -1,6 +1,6 @@
 import sys, traceback
 import yaml
-from prrt.vehicle import ArticulatedVehicle
+from prrt.vehicle import ArticulatedVehicle, ArticulatedVehicleFactory
 from prrt.ptg import APTG
 from math import radians as rad, degrees as deg
 from prrt.helper import load_object
@@ -21,7 +21,7 @@ def main():
             aptg_config_file = sys.argv[3]
             with open(vehicle_config_file) as f:
                 vehicle_config = yaml.load(f)
-            av = ArticulatedVehicle(vehicle_config)
+            av = ArticulatedVehicleFactory.build_av(vehicle_config)
             with open(aptg_config_file) as f:
                 aptg_config = yaml.load(f)
             aptg = APTG(av, aptg_config)
@@ -130,7 +130,7 @@ def plot_ptg_obstacle_grid(aptg: APTG, init_phi: float, alpha: float):
 def build_aptg(aptg: APTG):
     print('building APTG, this will take a while!')
     aptg.build()
-    aptg.dump('./{0}.pkl'.format(aptg.name))
+    aptg.dump('./jar/{0}.pkl'.format(aptg.name))
 
 
 def print_help():

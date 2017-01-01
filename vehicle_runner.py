@@ -1,6 +1,6 @@
 import sys, traceback
 import yaml
-from prrt.vehicle import ArticulatedVehicle
+from prrt.vehicle import ArticulatedVehicleFactory, ArticulatedVehicle
 from math import  radians as rad
 
 
@@ -15,7 +15,7 @@ def main():
         vehicle_config_file = sys.argv[2]
         with open(vehicle_config_file) as f:
             vehicle_config = yaml.load(f)
-        av = ArticulatedVehicle(vehicle_config)
+        av = ArticulatedVehicleFactory.build_av(vehicle_config)
         argv_count = len(sys.argv)
 
         # process commands
