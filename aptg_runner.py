@@ -11,7 +11,7 @@ from prrt.helper import load_object
 def main():
     try:
         # if no arguments were passed print help
-        if len(sys.argv) ==1:
+        if len(sys.argv) == 1:
             print_help()
             return
         # process shared argument across all functions

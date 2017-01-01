@@ -5,6 +5,10 @@ from prrt.planner import Planner
 
 def main():
     try:
+        # if no arguments were passed print help
+        if len(sys.argv) == 1:
+            print_help()
+            return
         # process shared argument across all functions
         command = int(sys.argv[1])
         if command in [1]:

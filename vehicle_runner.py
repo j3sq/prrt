@@ -6,6 +6,10 @@ from math import  radians as rad
 
 def main():
     try:
+        # if no arguments were passed print help
+        if len(sys.argv) == 1:
+            print_help()
+            return
         # process shared argument across all functions
         command = int(sys.argv[1])
         vehicle_config_file = sys.argv[2]
