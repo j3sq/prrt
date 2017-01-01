@@ -35,7 +35,7 @@ def main():
         # process commands
         if command == 1 and arg_count == 3:
             plot_ptg_cpoints(aptg, rad(float(sys.argv[4])))
-        elif command == 2 and arg_count == 3:
+        elif command == 2 and arg_count == 4:
             trace_trajectory_at_phi_alpha(aptg, rad(float(sys.argv[4])), rad(float(sys.argv[5])))
         elif command == 3 and arg_count == 3:
             trace_trajectory_at_phi(aptg, rad(float(sys.argv[4])))
