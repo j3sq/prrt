@@ -12,7 +12,7 @@ world_height : 68.3                           # Map height (m)
 
 aptg_files :                                 # List of APTGs pickle file
     - './jar/fwd_captg.pkl'
-    - './jar/bwd_captg.pkl'                     
+    - './jar/bwd_captg.pkl'
 
 
 vehicle_config: './vehicle.yaml'        # Vehicle configuration file.
@@ -30,7 +30,7 @@ goal_pose :                             # Vehicle goal pose
     phi : 0.0                           # Vehicle goal articulation angle (Deg) - NOT USED!
 
 
-D_max : 2.0                             # Maximum distance between two consecutive nodes
+D_max : 3.0                             # Maximum distance between two consecutive nodes
                                         # Note: Must be less than PTGs grid size
 obs_R : 1.5                             # Multiple of grid_size, only obstacles within a circle
                                         # (with the robot at it's center and radius = obs_R* grid_size) will be checked. 

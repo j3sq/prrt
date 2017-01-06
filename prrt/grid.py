@@ -72,7 +72,7 @@ class Grid(metaclass=ABCMeta):
             return None
         if ix < 0 or iy < 0:
             return None
-        return self.cells[iy][ix]
+        return self.cells[ix][iy]
 
     @property
     def cell_count_x(self):

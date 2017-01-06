@@ -18,8 +18,8 @@ class PointR2(object):
 
 class PoseR2S2(object):
     """
-    define a pose (x,y,theta, __phi) in R2 S2 space
-    __phi is the articulation angle of the truck-trailer vehicle
+    define a pose (x,y,theta, last_phi) in R2 S2 space
+    last_phi is the articulation angle of the truck-trailer vehicle
     """
 
     def __init__(self, x=0., y=0., theta=0.0, phi=0.0):

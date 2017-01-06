@@ -26,7 +26,7 @@ class PTG(metaclass=ABCMeta):
         self.min_dist_between_cpoints = config['min_dist_between_cpoints']  # type: float
         self.k_theta = config['k_theta']  # type: float
         self.distance_ref = config['grid_size']  # type: float
-        self.obstacle_grid = ObstacleGrid(config['grid_size'], config['grid_resolution'])
+        self.obstacle_grid = ObstacleGrid(3 * config['grid_size'], 3 * config['grid_resolution'])
         self.cpoints_grid = CPointsGrid(config['grid_size'], config['grid_resolution'])
         self.name = config['name']
         # initial phi is meant to be added by the caller (eg. APTG). Assume it 0 if not available
@@ -202,6 +202,8 @@ class CPTG(PTG):
                 R = Rmin * np.sign(R)
             a = np.pi * self.vehicle.v_max / (self.vehicle.w_max * R)
             ik = self.alpha2idx(a)
+            if abs(a) > self.vehicle.alpha_max + self.alpha_resolution:
+                is_exact = False
         else:
             if np.sign(p.x) == np.sign(self.K):
                 ik = self.alpha2idx(0)

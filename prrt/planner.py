@@ -138,16 +138,17 @@ class Planner(object):
 
     @staticmethod
     def transform_toTP_obstacles(ptg: PTG, obstacles_ws: List[PointR2], max_dist: float) -> List[float]:
-        obs_TP = []  # type: List[float]
-        for k in range(len(ptg.cpoints)):
-            obs_TP.append(ptg.distance_ref)
+        # obs_TP = []  # type: List[float]
+        # for k in range(len(ptg.cpoints)):
+        #     obs_TP.append(ptg.distance_ref)
             # If you just  turned 180deg, end there
-            if len(ptg.cpoints[k]) == 0:
-                obs_TP[k] = 0.  # Invalid configuration
-                continue
-            phi = ptg.cpoints[k][-1].theta
-            if abs(phi) >= np.pi * 0.95:
-                obs_TP[k] = ptg.cpoints[k][-1].d
+            # if len(ptg.cpoints[k]) == 0:
+            #     obs_TP[k] = 0.  # Invalid configuration
+            #     continue
+            # phi = ptg.cpoints[k][-1].theta
+            # if abs(phi) >= np.pi * 0.95:
+            #     obs_TP[k] = ptg.cpoints[k][-1].d
+        obs_TP = [ptg.distance_ref]*len(ptg.cpoints)  # type: List[float]
         for obstacle in obstacles_ws:
             if abs(obstacle.x) > max_dist or abs(obstacle.y) > max_dist:
                 continue
@@ -176,7 +177,7 @@ class Planner(object):
         max_count = self.config['max_count']
         counter = 0
         min_goal_dist_yet = float('inf')
-        while not solution_found and counter < max_count:
+        while not solution_found and len(self.tree.nodes) < max_count:
             counter += 1
             rand_pose = self.world.get_random_pose(goal_pose)
             candidate_new_nodes = sorteddict.SortedDict()
@@ -184,7 +185,7 @@ class Planner(object):
             for aptg in self.aptgs:
                 ptg, ptg_nearest_node, ptg_d_min = self.tree.get_aptg_nearest_node(rand_node, aptg)
                 if ptg_nearest_node is None:
-                    print('PTG {0} can\'t find nearest pose to {1}'.format(ptg.name, rand_node))
+                    print('APTG {0} can\'t find nearest pose to {1}'.format(aptg.name, rand_node))
                     continue
                 ptg_nearest_pose = ptg_nearest_node.pose
                 rand_pose_rel = rand_pose - ptg_nearest_pose
@@ -243,7 +244,7 @@ class Planner(object):
                 min_goal_dist_yet = min(goal_dist, min_goal_dist_yet)
                 if is_acceptable_goal:
                     print('goal reached!')
-                    return
+                    break
                     # To do: continue PlannerRRT_SE2_TPS.cpp at line 415
                 print(counter)
         print('Done!')

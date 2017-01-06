@@ -4,13 +4,13 @@
 #######################################################################################
 ####################### Vehicle configuration section #################################
 module_name : 'prrt.vehicle'            # name of the module where the vehicle class is defined
-class_name : 'ArticulatedVehicle'       # name of the vehicle
+class_name : 'ArticulatedVehicleB'       # name of the vehicle
 v_max : 2.0                             # Maximum absolute linear velocity (m/s)
-alpha_max : 30.                         # Maximum steering angle (deg)
-w_max : 40                              # Maximum absolute rotational velocity (deg/s)
+alpha_max : 10.                         # Maximum steering angle (deg)
+w_max : 25                              # Maximum absolute rotational velocity (deg/s)
 phi_max : 30.0                          # Maximum absolute articulation angle (deg)
 tractor_w: 2.0                          # Width of the tractor (m)
 tractor_l: 1.0                          # length of the tractor (m)
 link_l: 1.0                             # length of the link connection tractor with trailer (m)
 trailer_w: 2.0                          # Width of the trailer (m)
-trailer_l: 3.0                          # length of the trailer (m)
+trailer_l: 5.0                          # length of the trailer (m)

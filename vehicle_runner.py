@@ -1,7 +1,7 @@
 import sys, traceback
 import yaml
 from prrt.vehicle import ArticulatedVehicleFactory, ArticulatedVehicle
-from math import  radians as rad
+from math import radians as rad
 
 
 def main():
