@@ -107,6 +107,7 @@ class CPointsGrid(Grid):
       track of the max abd min index of cpoint in a given trajectory. The data will be later used
       to narrow down search operation for collision detection.
     '''
+
     def update_cell(self, ix: int, iy: int, k: int, n: int):
         if self.cells[ix][iy] is None:
             self.cells[ix][iy] = (INT_MAX, INT_MAX, 0, 0)
@@ -184,21 +185,28 @@ class WorldGrid(object):
         return PoseR2S2(x, y, theta)
 
     def build_obstacle_buffer(self):
+        obstacles = []
         for ix in range(self.iwidth):
             for iy in range(self.iheight):
                 if self.omap[iy][ix]:
                     x = self.idx_to_x(ix)
                     y = self.idx_to_y(iy)
-                    self._obstacle_buffer.append(PointR2(x, y))
+                    # self._obstacle_buffer.append(PointR2(x, y))
+                    obstacles.extend([x, y])
+        self._obstacle_buffer = np.reshape(obstacles, newshape=(len(obstacles) // 2, 2)).T
 
     def transform_point_cloud(self, ref_pose: PoseR2S2, max_dist):
-        in_region_obstacles = []  # type: List[PointR2]
-        inv_pose = -ref_pose  # type: PoseR2S2
-        for obstacle in self._obstacle_buffer:
-            dx = obstacle.x - ref_pose.x
-            dy = obstacle.y - ref_pose.y
-            if abs(dx) > max_dist or abs(dy) > max_dist:
-                continue
-            obs_rel = inv_pose.compose_point(PointR2(obstacle.x, obstacle.y))
-            in_region_obstacles.append(obs_rel)
-        return in_region_obstacles
+        inv_pose_x = -ref_pose.x * np.cos(ref_pose.theta) - ref_pose.y * np.sin(ref_pose.theta)
+        inv_pose_y = ref_pose.x * np.sin(ref_pose.theta) - ref_pose.y * np.cos(ref_pose.theta)
+        inv_pose_theta = - ref_pose.theta
+        inv_pose = np.array([[inv_pose_x], [inv_pose_y], [inv_pose_theta]])
+
+        # First get a list of obstacles within range
+        obstacles_diff = self._obstacle_buffer - np.array([[ref_pose.x], [ref_pose.y]])
+        obstacles_in_range = self._obstacle_buffer[:, (np.absolute(obstacles_diff[0, :]) < max_dist) & (
+            np.absolute(obstacles_diff[1, :]) < max_dist)]
+        R = np.array(
+            [[np.cos(inv_pose_theta), -np.sin(inv_pose_theta)], [np.sin(inv_pose_theta), np.cos(inv_pose_theta)]])
+        obstacles_rel = inv_pose[0:2] + R.dot(obstacles_in_range)
+
+        return obstacles_rel

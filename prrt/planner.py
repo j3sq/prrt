@@ -137,29 +137,31 @@ class Planner(object):
         self.load_world_map(map_file, width, height)
 
     @staticmethod
-    def transform_toTP_obstacles(ptg: PTG, obstacles_ws: List[PointR2], max_dist: float) -> List[float]:
+    def transform_toTP_obstacles(ptg: PTG, obstacles_ws: List[PointR2], k: int, max_dist: float) -> List[float]:
         # obs_TP = []  # type: List[float]
         # for k in range(len(ptg.cpoints)):
         #     obs_TP.append(ptg.distance_ref)
-            # If you just  turned 180deg, end there
-            # if len(ptg.cpoints[k]) == 0:
-            #     obs_TP[k] = 0.  # Invalid configuration
-            #     continue
-            # phi = ptg.cpoints[k][-1].theta
-            # if abs(phi) >= np.pi * 0.95:
-            #     obs_TP[k] = ptg.cpoints[k][-1].d
-        obs_TP = [ptg.distance_ref]*len(ptg.cpoints)  # type: List[float]
-        for obstacle in obstacles_ws:
-            if abs(obstacle.x) > max_dist or abs(obstacle.y) > max_dist:
+        # If you just  turned 180deg, end there
+        # if len(ptg.cpoints[k]) == 0:
+        #     obs_TP[k] = 0.  # Invalid configuration
+        #     continue
+        # phi = ptg.cpoints[k][-1].theta
+        # if abs(phi) >= np.pi * 0.95:
+        #     obs_TP[k] = ptg.cpoints[k][-1].d
+        obs_TP = [ptg.distance_ref] * len(ptg.cpoints)  # type: List[float]
+        for i in range(np.shape(obstacles_ws)[1]):
+            if abs(obstacles_ws[0][i]) > max_dist or abs(obstacles_ws[1][i]) > max_dist:
                 continue
+            obstacle = PointR2(obstacles_ws[0][i], obstacles_ws[1][i])
             collision_cell = ptg.obstacle_grid.cell_by_pos(obstacle)
             if collision_cell is None:
                 continue
             # assert collision_cell is not None, 'collision cell is empty!'
             # get min_dist for the current k
             for kd_pair in collision_cell:
-                if kd_pair.d < obs_TP[kd_pair.k]:
+                if kd_pair.k == k and kd_pair.d < obs_TP[kd_pair.k]:
                     obs_TP[kd_pair.k] = kd_pair.d
+                    break
         return obs_TP
 
     def solve(self):
@@ -194,7 +196,7 @@ class Planner(object):
                 d_rand *= ptg.distance_ref
                 max_dist_for_obstacles = obs_R * ptg.distance_ref
                 obstacles_rel = self.world.transform_point_cloud(ptg_nearest_pose, max_dist_for_obstacles)
-                obstacles_TP = self.transform_toTP_obstacles(ptg, obstacles_rel, max_dist_for_obstacles)
+                obstacles_TP = self.transform_toTP_obstacles(ptg, obstacles_rel, k_rand, max_dist_for_obstacles)
                 d_free = obstacles_TP[k_rand]
                 d_new = min(d_max, d_rand)
                 if debug_tree_state > 0 and counter % debug_tree_state == 0:
@@ -246,7 +248,7 @@ class Planner(object):
                     print('goal reached!')
                     break
                     # To do: continue PlannerRRT_SE2_TPS.cpp at line 415
-                print(counter)
+                print(counter, len(self.tree.nodes))
         print('Done!')
         print('Minimum distance to goal reached is {0}'.format(min_goal_dist_yet))
         if self.config['plot_tree_file'] != '':
