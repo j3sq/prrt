@@ -1,7 +1,8 @@
-# PRRT: Python implementation for Rapidly-exploring Random Tree
+#TP-Space RRT For Articulated Vehicles
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=wZBmb4afLGo
 " target="_blank"><img src="http://img.youtube.com/vi/wZBmb4afLGo/0.jpg" 
 alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+![alt text](https://github.com/j3sq/prrt/blob/master/sample.png "Sample solution tree")
 
 PRRT is built on the ideas presented in:
 - Blanco, Jose Luis, Mauro Bellone, and Antonio Gimenez-Fernandez. [TP-Space RRT-Kinematic Path Planning of Non-Holonomic Any-Shape Vehicles][TP-RRT] International Journal of Advanced Robotic Systems 12 (2015)
