@@ -4,35 +4,35 @@ from prrt.planner import Planner
 
 
 def main():
-    try:
-        # if no arguments were passed print help
-        if len(sys.argv) == 1:
-            print_help()
-            return
-        # process shared argument across all functions
-        command = int(sys.argv[1])
-        if command in [1]:
-            planner_config_file = sys.argv[2]
-            with open(planner_config_file) as f:
-                planner_config = yaml.load(f)
-            planner = Planner(planner_config)
-        else:
-            print_help()
-            return
-        arg_count = len(sys.argv) - 2  # remove file name and command number
-
-        # process commands
-        if command == 1 and arg_count == 1:
-            solve(planner)
-
-        else:
-            print_help()
-    except:
-        print()
-        print('Error! Make sure to follow usage guidelines shown below')
-        print('Error details:')
-        print(traceback.print_exc())
+    # try:
+    # if no arguments were passed print help
+    if len(sys.argv) == 1:
         print_help()
+        return
+    # process shared argument across all functions
+    command = int(sys.argv[1])
+    if command in [1]:
+        planner_config_file = sys.argv[2]
+        with open(planner_config_file) as f:
+            planner_config = yaml.load(f)
+        planner = Planner(planner_config)
+    else:
+        print_help()
+        return
+    arg_count = len(sys.argv) - 2  # remove file name and command number
+
+    # process commands
+    if command == 1 and arg_count == 1:
+        solve(planner)
+
+    else:
+        print_help()
+    # except:
+    #     print()
+    #     print('Error! Make sure to follow usage guidelines shown below')
+    #     print('Error details:')
+    #     print(traceback.print_exc())
+    #     print_help()
 
 
 
