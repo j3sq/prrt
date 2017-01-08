@@ -1,15 +1,14 @@
 from typing import List
-
 import matplotlib.pyplot as plt
 import numpy as np
 from sortedcontainers import sorteddict
-
 import prrt.helper as helper
 from prrt.grid import WorldGrid
 from prrt.primitive import PoseR2S2, PointR2
 from prrt.ptg import PTG, APTG
 from math import degrees as deg
 from prrt.vehicle import ArticulatedVehicle
+import time
 
 
 class Node(object):
@@ -22,6 +21,7 @@ class Node(object):
         self.parent = parent
         self.ptg = ptg
         self.edges_to_child = []  # type: List[Edge]
+        self.id = 0
 
     def __str__(self):
         return str(self.pose)
@@ -50,24 +50,7 @@ class Tree(object):
         self.nodes = [root_node]  # type: List[Node]
         self._edges = []  # type: List[Edge]
 
-    def get_ptg_nearest_node(self, to_node: Node, ptg: PTG) -> (PTG, Node, float):
-        d_min = float('inf')
-        node_min = None
-        for node in self.nodes:
-            if node.ptg is ptg:  # only search nodes reachable by the current ptg
-                # Only do the the expensive ptg.get_distance when needed
-                if abs(node.pose.x - to_node.pose.x) > d_min:
-                    continue
-                if abs(node.pose.y - to_node.pose.y) > d_min:
-                    continue
-                d = ptg.get_distance(node.pose, to_node.pose)
-                if d < d_min:
-                    d_min = d
-                    node_min = node
-
-        return node_min, d_min
-
-    def get_aptg_nearest_node(self, to_node: Node, aptg: APTG) -> (PTG, Node, float):
+    def get_aptg_nearest_node(self, to_node: Node, aptg: APTG, mode='TP') -> (PTG, Node, float):
         d_min = float('inf')
         node_min = None
         node_ptg = None
@@ -78,7 +61,10 @@ class Tree(object):
             if abs(node.pose.y - to_node.pose.y) > d_min:
                 continue
             ptg = aptg.ptg_at_phi(node.pose.phi)
-            d = ptg.get_distance(node.pose, to_node.pose)
+            if mode == 'TP':
+                d = ptg.get_distance(node.pose, to_node.pose)
+            elif mode == 'Metric':
+                d = ptg.get_distance_metric(node.pose, to_node.pose)
             if d < d_min:
                 d_min = d
                 node_min = node
@@ -87,6 +73,7 @@ class Tree(object):
         return node_ptg, node_min, d_min
 
     def insert_node_and_edge(self, parent: Node, child: Node, edge: Edge):
+        child.id = len(self.nodes)
         self.nodes.append(child)
         self._edges.append(edge)
         parent.edges_to_child.append(edge)
@@ -179,6 +166,7 @@ class Planner(object):
         max_count = self.config['max_count']
         counter = 0
         min_goal_dist_yet = float('inf')
+        start_time = time.time()
         while not solution_found and len(self.tree.nodes) < max_count:
             counter += 1
             rand_pose = self.world.get_random_pose(goal_pose)
@@ -247,10 +235,16 @@ class Planner(object):
                 if is_acceptable_goal:
                     print('goal reached!')
                     break
-                    # To do: continue PlannerRRT_SE2_TPS.cpp at line 415
+                    # To do: continue running to refine solution
                 print(counter, len(self.tree.nodes))
-        print('Done!')
+        print('Done in {0:.2f} seconds'.format(time.time() - start_time))
         print('Minimum distance to goal reached is {0}'.format(min_goal_dist_yet))
+        if not is_acceptable_goal:
+            print('Solution not found within iteration limit')
+            return
+        # dump results
+        if self.config['csv_out_file'] != '':
+            self.solution_to_csv(self.config['csv_out_file'])
         if self.config['plot_tree_file'] != '':
             self.tree.plot_nodes(self.world, goal_pose, self.config['plot_tree_file'])
         if self.config['plot_solution'] != '':
@@ -279,11 +273,13 @@ class Planner(object):
                 vehicle.phi = c_point.phi
                 vehicle.plot(ax, current_pose, self.world, color)
 
-                title = r'$x={0:.1f},y={1:.1f},\theta={2:+.1f}^\circ,\phi={3:+.1f}^\circ,\alpha={4:+.1f}^\circ$'.format(
+                title = r'$x={0:.1f},y={1:.1f},\theta={2:+.1f}^\circ,\phi={3:+.1f}^\circ, v={4:+.1f}, \omega={5:+.1f}, \alpha={6:+.1f}^\circ$'.format(
                     current_pose.x,
                     current_pose.y,
                     deg(current_pose.theta),
                     deg(current_pose.phi),
+                    c_point.v,
+                    c_point.w,
                     deg(c_point.alpha))
 
                 fig.suptitle(title)
@@ -294,6 +290,31 @@ class Planner(object):
                 # clear the figure for next drawing
                 ax.lines = []
                 frame += 1
+
+    def solution_to_csv(self, file_name='solution.csv'):
+        import csv
+        child_node = self.tree.nodes[-1]
+        trajectory = []  # type #: List[Edge]
+        while True:
+            parent_node = child_node.parent
+            if parent_node is None:
+                break
+            trajectory.append(self.get_trajectory_edge(parent_node, child_node))
+            child_node = parent_node
+
+        with open(file_name, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile, delimiter=',')
+            for i in range(len(trajectory) - 1, -1, -1):
+                edge = trajectory[i]
+                start_pose = edge.parent.pose.copy()
+                for d in np.arange(0., edge.d, 0.2):
+                    c_point = edge.ptg.get_cpoint_at_d(d, edge.k)
+                    current_pose = start_pose + c_point.pose
+                    row = [current_pose.x, current_pose.y, current_pose.theta, current_pose.phi, c_point.v,
+                           c_point.w]
+                    csv_writer.writerow([edge.ptg.name, edge.parent.id] + ['{0:+.4f}'.format(x) for x in row])
+
+        print('Dumping solution to csv file done')
 
     @staticmethod
     def get_trajectory_edge(parent: Node, child: Node) -> Edge:
