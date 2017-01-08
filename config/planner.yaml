@@ -13,6 +13,7 @@ world_height : 68.3                           # Map height (m)
 aptg_files :                                 # List of APTGs pickle file
     - './jar/fwd_captg.pkl'
     - './jar/bwd_captg.pkl'
+    #- './jar/fwd_Alpha-a.pkl'
 
 
 vehicle_config: './vehicle.yaml'        # Vehicle configuration file.
@@ -37,7 +38,9 @@ obs_R : 1.5                             # Multiple of grid_size, only obstacles 
 goal_dist_tolerance : 7.0               # Maximum distance (R2) to admit a candidate goal node (m)
 goal_ang_tolerance : 180                # Maximum heading difference to admit a candidate goal node (deg)
 
-max_count : 2000                        # Planner will abort solving if iteration count exceeds this number
+max_count : 5000                        # Planner will abort solving if iteration count exceeds this number
+csv_out_file :  './out/solution.csv'    # A trace of the solution will as a csv list of poses and control command
+                                        #  will be saved at this location
 plot_tree_file : './out/tree.png'       # A plot of the final tree will be saved at this location,
                                         #  empty value means don't plot
 plot_solution : './out/frame'           # Solution steps plot will be dumped at this location,

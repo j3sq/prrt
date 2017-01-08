@@ -82,18 +82,17 @@ class ArticulatedVehicle(object):
     def get_trailer_vertices_at_pose(self, pose: PoseR2S2) -> List[PointR2]:
         return self.get_vertices_at_pose(pose)[6:10]
 
-    def execute_motion(self, pose: PoseR2S2, K: int, w: float, dt: float) -> PoseR2S2:
+    def execute_motion(self, pose: PoseR2S2, v: float, w: float, dt: float) -> PoseR2S2:
         if K == 1:
-            new_pose = self._sim_move_forward(pose, w, dt)
+            new_pose = self._sim_move_forward(pose, v, w, dt)
         elif K == -1:
             # rev_pose = self._sim_reverse(pose, w, dt)
-            new_pose = self._sim_move_reverse(pose, w, dt)
+            new_pose = self._sim_move_reverse(pose, v, w, dt)
             # new_pose = self._sim_reverse(new_rev_pose)
         return new_pose
 
-    def _sim_move_reverse(self, pose: PoseR2S2, w: float, dt: float):
+    def _sim_move_reverse(self, pose: PoseR2S2, v: float, w: float, dt: float):
         # Transform to simulated car pulling the trailer backwards
-        v = self.v_max
         x_rev = pose.x - (self.trailer_l / 2.) * cos(pose.theta) - \
                 (self.tractor_l / 2 + self.link_l) * cos(pose.theta + pose.phi)
         y_rev = pose.y - (self.trailer_l / 2) * sin(pose.theta) - \
@@ -119,9 +118,8 @@ class ArticulatedVehicle(object):
 
         return new_pose
 
-    def _sim_move_forward(self, pose: PoseR2S2, w: float, dt: float) -> (PoseR2S2, float):
+    def _sim_move_forward(self, pose: PoseR2S2, v: float, w: float, dt: float) -> (PoseR2S2, float):
         final_pose = PoseR2S2()
-        v = self.v_max
         final_pose.x = pose.x + v * dt * cos(pose.theta)
         final_pose.y = pose.y + v * dt * sin(pose.theta)
         final_pose.theta = pose.theta + w * dt
@@ -164,7 +162,6 @@ class ArticulatedVehicleB(ArticulatedVehicle):
     def __init__(self, config: dict):
         # check the provided config file for details on the variables initialized
         self.v_max = config['v_max']  # type: float
-        self.alpha_max = rad(config['alpha_max'])  # type: float
         self.w_max = rad(config['w_max'])  # type: float
         self.phi_max = rad(config['phi_max'])  # type: float
         self.tractor_w = config['tractor_w']  # type: float
@@ -226,15 +223,15 @@ class ArticulatedVehicleB(ArticulatedVehicle):
     def get_tractor_vertices_at_pose(self, pose: PoseR2S2) -> List[PointR2]:
         return self.get_vertices_at_pose(pose)[6:10]
 
-    def execute_motion(self, pose: PoseR2S2, K: int, w: float, dt: float) -> PoseR2S2:
+    def execute_motion(self, pose: PoseR2S2, v: float, w: float, dt: float) -> PoseR2S2:
         theta1 = pose.theta
         theta2 = wrap_to_npi_pi(theta1 - pose.phi)
-        tan_alpha = w * self.tractor_l / (K * self.v_max)
+        # tan_alpha = w * self.tractor_l / v
         L2 = self.trailer_l + self.link_l
-        x_new = pose.x + dt * K * self.v_max * cos(pose.phi) * cos(theta2)
-        y_new = pose.y + dt * K * self.v_max * cos(pose.phi) * sin(theta2)
-        theta_new = theta1 + dt * K * self.v_max * tan_alpha / self.tractor_l
-        phi_new = theta_new - (theta2 + dt * K * self.v_max * sin(pose.phi) / L2)
+        x_new = pose.x + dt * v * cos(pose.phi) * cos(theta2)
+        y_new = pose.y + dt * v * cos(pose.phi) * sin(theta2)
+        theta_new = theta1 + dt * w
+        phi_new = theta_new - (theta2 + dt * v * sin(pose.phi) / L2)
         return PoseR2S2(x_new, y_new, theta_new, phi_new)
 
 

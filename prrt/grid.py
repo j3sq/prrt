@@ -109,6 +109,8 @@ class CPointsGrid(Grid):
     '''
 
     def update_cell(self, ix: int, iy: int, k: int, n: int):
+        if ix < 0 or ix >= self.cell_count_x or iy < 0 or iy >= self.cell_count_y:
+            return
         if self.cells[ix][iy] is None:
             self.cells[ix][iy] = (INT_MAX, INT_MAX, 0, 0)
         k_min, n_min, k_max, n_max = self.cells[ix][iy]
@@ -117,6 +119,11 @@ class CPointsGrid(Grid):
         k_max = max(k_max, k)
         n_max = max(n_max, n)
         self.cells[ix][iy] = (k_min, n_min, k_max, n_max)
+
+    def cell_by_idx(self, ix: int, iy: int):
+        if 0 <= ix < self.cell_count_x and 0 <= iy < self.cell_count_y:
+            return self.cells[ix][iy]
+        return None
 
 
 class WorldGrid(object):

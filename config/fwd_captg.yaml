@@ -6,7 +6,10 @@
 name : 'FWD_CAPTG'                 # APTG name, used for debugging, and logs
 ptg_module : 'prrt.ptg'            # name of the module where the PTG class is defined
 ptg_class : 'CPTG'                 # name of the PTG class
-alpha_resolution : 1.0             # Resolution of steering angle (deg)
+alpha_max : 10.0                   # Maximum value for trajectory generation parameter (deg)
+                                   # ,ideally 180 but it leads to invalid configurations
+                                   # for the articulation angle
+alpha_resolution : 1.0             # Resolution of alpha (deg)
 phi_resolution : 3.0               # Resolution of articulation angle (deg)
 K : 1                              # Set K = -1 to generate reverse trajectories, 1 for forward trajectories
 dt : 0.001                         # Time step for simulating trajectories (s)

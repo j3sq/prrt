@@ -90,14 +90,16 @@ class CPoint(object):
     Holds data about a trajectory point in configuration space
     """
 
-    def __init__(self, pose: PoseR2S2 = None, d: float = 0., v: float = 0., alpha: float = 0.):
+    def __init__(self, pose: PoseR2S2 = None, d: float = 0., v: float = 0., w: float = 0, alpha: float = 0., n=0):
         self.pose = pose
         self.d = d
         self.v = v
+        self.w = w
         self.alpha = alpha
+        self.n = n
 
     def __str__(self):
-        return 'd={0:0.1f}, v={1:0.1f}, alpha={2:0.1f}, pose={3}'.format(self.d, self.v, deg(self.alpha),
+        return 'd={0:0.1f}, v={1:0.1f}, w={2:0.1f}, alpha={3:0.1f}, pose={4}'.format(self.d, self.v, self.w, deg(self.alpha),
                                                                          str(self.pose))
 
     @property
