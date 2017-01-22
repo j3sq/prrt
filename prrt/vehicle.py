@@ -235,6 +235,60 @@ class ArticulatedVehicleB(ArticulatedVehicle):
         return PoseR2S2(x_new, y_new, theta_new, phi_new)
 
 
+class Car(ArticulatedVehicle):
+    '''
+    A car like (Non-Articulated) vehicle class
+    '''
+
+    def __init__(self, config: dict):
+        self.v_max = config['v_max']  # type: float
+        self.w_max = rad(config['w_max'])  # type: float
+        self.phi_max = 0.
+        self.tractor_w = config['tractor_w']  # type: float
+        self.tractor_l = config['tractor_l']  # type: float
+
+        # vertices numbered as shown below
+        # Origin is the center of the tractor back axle
+        #
+        #  3-------2
+        #  |       |
+        #  o       | Trk_W
+        #  |       |
+        #  0-------1
+        #     Trk_L
+        o = PoseR2S2(0., 0., 0., 0.)
+        p0 = o.compose_point(PointR2(0, -self.tractor_w / 2.))
+        p1 = o.compose_point(PointR2(self.tractor_l, -self.tractor_w / 2.))
+        p2 = o.compose_point(PointR2(self.tractor_l, self.tractor_w / 2.))
+        p3 = o.compose_point(PointR2(0, self.tractor_w / 2.))
+        self.shape = (p0, p1, p2, p3)
+
+    def update_shape(self, pose: PoseR2S2):
+        # adjust the tractor vertices based on articulation angel
+        o = PoseR2S2(pose.x, pose.y, pose.theta)
+        p0 = o.compose_point(PointR2(0, -self.tractor_w / 2.))
+        p1 = o.compose_point(PointR2(self.tractor_l, -self.tractor_w / 2.))
+        p2 = o.compose_point(PointR2(self.tractor_l, self.tractor_w / 2.))
+        p3 = o.compose_point(PointR2(0, self.tractor_w / 2.))
+        self.shape = (p0, p1, p2, p3)
+
+    def get_vertices_at_pose(self, pose: PoseR2S2) -> List[PointR2]:
+        self.update_shape(pose)
+        return self.shape
+
+    def get_trailer_vertices_at_pose(self, pose: PoseR2S2) -> List[PointR2]:
+        return []
+
+    def get_tractor_vertices_at_pose(self, pose: PoseR2S2) -> List[PointR2]:
+        return self.get_vertices_at_pose(pose)
+
+    def execute_motion(self, pose: PoseR2S2, v: float, w: float, dt: float) -> PoseR2S2:
+        x_new = pose.x + dt * v * cos(pose.theta)
+        y_new = pose.y + dt * v * sin(pose.theta)
+        theta_new = wrap_to_npi_pi(pose.theta + dt * w)
+        return PoseR2S2(x_new, y_new, theta_new)
+
+
 class ArticulatedVehicleFactory(object):
     @staticmethod
     def build_av(config: dict) -> ArticulatedVehicle:
