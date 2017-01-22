@@ -73,7 +73,6 @@ class PTG(metaclass=ABCMeta):
                                 self.obstacle_grid.update_cell(x_idx - 1, y_idx - 1, k, cpoint.d)
         print('Completed building obstacle grid for {0}'.format(self.name))
 
-
     def build(self):
         self.build_cpoints()
         self.build_obstacle_grid()
@@ -220,7 +219,6 @@ class CPTG(PTG):
                     n += 1
             self.cpoints.append(cpoints_at_alpha)
         print('Completed building cpoints for {0}'.format(self.name))
-
 
     def inverse_WS2TP(self, p: PoseR2S2, tolerance=0.1) -> (bool, int, float):
         is_exact = True
