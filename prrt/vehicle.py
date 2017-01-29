@@ -14,7 +14,6 @@ class ArticulatedVehicle(object):
     def __init__(self, config: dict):
         # check the provided config file for details on the variables initialized
         self.v_max = config['v_max']  # type: float
-        self.alpha_max = rad(config['alpha_max'])  # type: float
         self.w_max = rad(config['w_max'])  # type: float
         self.phi_max = rad(config['phi_max'])  # type: float
         self.tractor_w = config['tractor_w']  # type: float
@@ -83,9 +82,9 @@ class ArticulatedVehicle(object):
         return self.get_vertices_at_pose(pose)[6:10]
 
     def execute_motion(self, pose: PoseR2S2, v: float, w: float, dt: float) -> PoseR2S2:
-        if K == 1:
+        if v >= 0.:
             new_pose = self._sim_move_forward(pose, v, w, dt)
-        elif K == -1:
+        elif v < 0:
             # rev_pose = self._sim_reverse(pose, w, dt)
             new_pose = self._sim_move_reverse(pose, v, w, dt)
             # new_pose = self._sim_reverse(new_rev_pose)
