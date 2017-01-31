@@ -160,6 +160,7 @@ class Planner(object):
         goal_ang_tolerance = self.config['goal_ang_tolerance']
         debug_tree_state = self.config['debug_tree_state']
         debug_tree_state_file = self.config['debug_tree_state_file']
+        bias = self.config['rrt_bias']
         obs_R = self.config['obs_R']
         D_max = self.config['D_max']
         solution_found = False
@@ -169,7 +170,7 @@ class Planner(object):
         start_time = time.time()
         while not solution_found and len(self.tree.nodes) < max_count:
             counter += 1
-            rand_pose = self.world.get_random_pose(goal_pose)
+            rand_pose = self.world.get_random_pose(goal_pose, bias)
             candidate_new_nodes = sorteddict.SortedDict()
             rand_node = Node(ptg=None, pose=rand_pose)
             for aptg in self.aptgs:
@@ -192,7 +193,7 @@ class Planner(object):
                                          '{0}{1:04d}.png'.format(debug_tree_state_file, counter))
                 # Skip if the current ptg and alpha (k_ran) can't reach this point
                 if ptg.cpoints[k_rand][-1].d < d_new:
-                    print('Node leads to invalid trajectory. Node Skipped!')
+                    #print('Node leads to invalid trajectory. Node Skipped!')
                     continue
 
                 if d_free >= d_new:
@@ -217,18 +218,19 @@ class Planner(object):
                         continue
                     new_edge = Edge(ptg, k_rand, d_new, ptg_nearest_node, new_pose)
                     candidate_new_nodes.update({d_new: new_edge})
-                    print('Candidate node found')
+                    #print('Candidate node found')
                 else:  # path is not free
-                    print('Obstacle ahead!')
+                    #print('Obstacle ahead!')
                     # do nothing for now
                     pass
             if len(candidate_new_nodes) > 0:
                 best_edge = candidate_new_nodes.peekitem(-1)[1]  # type : Edge
                 new_state_node = Node(best_edge.ptg, best_edge.end_pose, best_edge.parent)
                 self.tree.insert_node_and_edge(best_edge.parent, new_state_node, best_edge)
-                print('new node added to tree from ptg {0}'.format(best_edge.ptg.name))
+                #print('new node added to tree from ptg {0}'.format(best_edge.ptg.name))
                 goal_dist = best_edge.end_pose.distance_2d(goal_pose)
-                print(new_state_node.pose, goal_dist)
+                print("New note : ", new_state_node.pose)
+                print ("Goal distance : ", goal_dist)
                 goal_ang = abs(helper.angle_distance(best_edge.end_pose.theta, goal_pose.theta))
                 is_acceptable_goal = goal_dist < goal_dist_tolerance and goal_ang < goal_ang_tolerance
                 min_goal_dist_yet = min(goal_dist, min_goal_dist_yet)
@@ -236,11 +238,18 @@ class Planner(object):
                     print('goal reached!')
                     break
                     # To do: continue running to refine solution
-                print(counter, len(self.tree.nodes))
+                print("Couter = ",counter, "   Number of nodes :", len(self.tree.nodes))
         print('Done in {0:.2f} seconds'.format(time.time() - start_time))
         print('Minimum distance to goal reached is {0}'.format(min_goal_dist_yet))
         if not is_acceptable_goal:
             print('Solution not found within iteration limit')
+            # dump results
+            if self.config['csv_out_file'] != '':
+                self.solution_to_csv(self.config['csv_out_file'])
+            if self.config['plot_tree_file'] != '':
+                self.tree.plot_nodes(self.world, goal_pose, self.config['plot_tree_file'])
+            if self.config['plot_solution'] != '':
+                self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
             return
         # dump results
         if self.config['csv_out_file'] != '':
