@@ -37,13 +37,14 @@ def main():
             for i in range(0, n_iterations):
                 print ("Solving iteration number ", i)
                 solve(planner)
-                success, number_of_iterations, total_number_of_nodes, best_path_length, best_distance_to_target = planner.getResults()
+                success, number_of_iterations, total_number_of_nodes, best_path_length, best_distance_to_target, solving_time = planner.getResults()
                 print("results:")
                 print("       1. Solve success ", success)
                 print("       2. Number of iterations ", number_of_iterations)
                 print("       3. Total number of nodes in the tree ", total_number_of_nodes)
                 print("       4. Best path length ", best_path_length)
                 print("       5. Best distance to target ", best_distance_to_target)
+                print("       6. Solving time ", solving_time)
                 statistics_to_csv('stats.csv',
                                   success,
                                   number_of_iterations,
@@ -70,11 +71,12 @@ def statistics_to_csv(file_name='stats.csv',
                       number_of_iterations=0,
                       total_number_of_nodes=0,
                       best_path_length=0.0,
-                      best_distance_to_target=0.0):
+                      best_distance_to_target=0.0,
+                      solving_time = 0.0):
     import csv
     with open(file_name, 'a', newline='') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',')
-        row = [success, number_of_iterations, total_number_of_nodes, best_path_length, best_distance_to_target]
+        row = [success, number_of_iterations, total_number_of_nodes, best_path_length, best_distance_to_target, solving_time]
         csv_writer.writerow( ['{0:+.4f}'.format(x) for x in row])
 
 

@@ -111,6 +111,7 @@ class Planner(object):
         self.total_number_of_nodes = 0
         self.best_path_length = float('inf')
         self.best_distance_to_target = float('inf')
+        self.solving_time = float('inf')
 
     def load_world_map(self, map_file, width: float, height: float):
         self.world = WorldGrid(map_file, width, height)
@@ -128,13 +129,14 @@ class Planner(object):
         height = self.config['world_height']
         self.load_world_map(map_file, width, height)
 
-    def getResults(self) -> (bool, int, int, float, float):
+    def getResults(self) -> (bool, int, int, float, float, float):
         print("Getting results ")
         return self.planner_success, \
                self.total_number_of_iterations, \
                self.total_number_of_nodes, \
                self.best_path_length, \
-               self.best_distance_to_target
+               self.best_distance_to_target, \
+               self.solving_time
 
     @staticmethod
     def transform_toTP_obstacles(ptg: PTG, obstacles_ws: List[PointR2], k: int, max_dist: float) -> List[float]:
@@ -253,6 +255,7 @@ class Planner(object):
                     # To do: continue running to refine solution
                 print("Counter = ",counter, "   Number of nodes :", len(self.tree.nodes))
         print('Done in {0:.2f} seconds'.format(time.time() - start_time))
+        self.solving_time = time.time() - start_time
         print('Minimum distance to goal reached is {0}'.format(min_goal_dist_yet))
         if not is_acceptable_goal:
             print('Solution not found within iteration limit')
@@ -329,13 +332,15 @@ class Planner(object):
         import csv
         child_node = self.tree.nodes[-1]
         trajectory = []  # type #: List[Edge]
+        solution_length = 0.0
         while True:
             parent_node = child_node.parent
             if parent_node is None:
                 break
             trajectory.append(self.get_trajectory_edge(parent_node, child_node))
+            solution_length = solution_length + parent_node.pose.distance_2d(child_node.pose)
             child_node = parent_node
-
+        self.best_path_length = solution_length
         with open(file_name, 'w', newline='') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=',')
             for i in range(len(trajectory) - 1, -1, -1):
