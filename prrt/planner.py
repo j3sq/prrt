@@ -106,6 +106,11 @@ class Planner(object):
         self.goal_pose = None  # type: PoseR2S2
         self.tree = None  # type: Tree
         self.config = config
+        self.planner_success = False
+        self.total_number_of_iterations = 0
+        self.total_number_of_nodes = 0
+        self.best_path_length = float('inf')
+        self.best_distance_to_target = float('inf')
 
     def load_world_map(self, map_file, width: float, height: float):
         self.world = WorldGrid(map_file, width, height)
@@ -122,6 +127,14 @@ class Planner(object):
         width = self.config['world_width']
         height = self.config['world_height']
         self.load_world_map(map_file, width, height)
+
+    def getResults(self) -> (bool, int, int, float, float):
+        print("Getting results ")
+        return self.planner_success, \
+               self.total_number_of_iterations, \
+               self.total_number_of_nodes, \
+               self.best_path_length, \
+               self.best_distance_to_target
 
     @staticmethod
     def transform_toTP_obstacles(ptg: PTG, obstacles_ws: List[PointR2], k: int, max_dist: float) -> List[float]:
@@ -238,11 +251,17 @@ class Planner(object):
                     print('goal reached!')
                     break
                     # To do: continue running to refine solution
-                print("Couter = ",counter, "   Number of nodes :", len(self.tree.nodes))
+                print("Counter = ",counter, "   Number of nodes :", len(self.tree.nodes))
         print('Done in {0:.2f} seconds'.format(time.time() - start_time))
         print('Minimum distance to goal reached is {0}'.format(min_goal_dist_yet))
         if not is_acceptable_goal:
             print('Solution not found within iteration limit')
+            self.planner_success = False
+            self.total_number_of_iterations = counter
+            self.total_number_of_nodes = len(self.tree.nodes)
+            self.best_path_length = 0.0 #Todo : add calculation!
+            self.best_distance_to_target = min_goal_dist_yet
+
             # dump results
             if self.config['csv_out_file'] != '':
                 self.solution_to_csv(self.config['csv_out_file'])
@@ -251,6 +270,12 @@ class Planner(object):
             if self.config['plot_solution'] != '':
                 self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
             return
+        # set parameters to get results
+        self.planner_success = True
+        self.total_number_of_iterations = counter
+        self.total_number_of_nodes = len(self.tree.nodes)
+        self.best_path_length = 0.0  # Todo : add calculation!
+        self.best_distance_to_target = min_goal_dist_yet
         # dump results
         if self.config['csv_out_file'] != '':
             self.solution_to_csv(self.config['csv_out_file'])
