@@ -1,5 +1,6 @@
 from typing import List
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as image
 import numpy as np
 from sortedcontainers import sorteddict
 import prrt.helper as helper
@@ -79,16 +80,36 @@ class Tree(object):
         parent.edges_to_child.append(edge)
 
     def plot_nodes(self, world: WorldGrid, goal: PointR2 = None, file_name=None):
+        import os.path
+        file_name_root = './out/tree.png'
+        file_name = file_name_root
+
+        # save the solution in a different file if the file already exist and numerate them
+        # TODO: really dirty way of doing it as it will check for all the files, fix this!
+        cnt = 0
+        while os.path.exists(file_name):
+            cnt = cnt + 1
+            file_name = ('{0}{1:04d}.png'.format(file_name_root, cnt))
+
         fig, ax = plt.subplots()
-        ax.matshow(world.omap, cmap=plt.cm.gray_r, origin='lower', interpolation='none')
+        #ax.matshow(world.omap, cmap=plt.cm.gray_r, origin='upper', interpolation='none')
+        # instead of showing image first and then the
+        map = np.fliplr(world.omap)
+        ax.imshow(map, cmap=plt.cm.gray_r, origin='upper', interpolation='none',
+                  extent=(world.width, 0.0, world.height, 0.0), zorder=-1)
+        plt.xlabel('x(m)', fontsize=20)
+        plt.ylabel('y(m)', fontsize=20)
+        plt.ylim(0, world.height)
+        plt.xlim(0, world.width)
         for node in self.nodes:
-            x = world.x_to_ix(node.pose.x)
-            y = world.y_to_iy(node.pose.y)
+            x = node.pose.x #world.x_to_ix(node.pose.x)
+            y = node.pose.y #world.y_to_iy(node.pose.y)
             ax.plot(x, y, 'bx')
         if goal is not None:
-            ax.plot(world.x_to_ix(goal.x), world.y_to_iy(goal.y), '+r')
+            ax.plot(goal.x, goal.y, '+r')
+            #ax.plot(world.x_to_ix(goal.x), world.y_to_iy(goal.y), '+r')
         if file_name is None:
-            plt.savefig('./out/tree.png')
+            plt.savefig(file_name)
         else:
             plt.savefig(file_name)
             # plt.show()
@@ -298,7 +319,15 @@ class Planner(object):
             child_node = parent_node
         fig, ax = plt.subplots()
         frame = 0
-        ax.matshow(self.world.omap, cmap=plt.cm.gray_r, origin='lower')
+        #ax.matshow(self.world.omap, cmap=plt.cm.gray_r, origin='lower')
+        # instead of showing image first and then the
+        map = np.fliplr(self.world.omap)
+        ax.imshow(map, cmap=plt.cm.gray_r, origin='upper', interpolation='none',
+                  extent=(self.world.width, 0.0, self.world.height, 0.0), zorder=-1)
+        plt.xlabel('x(m)', fontsize=20)
+        plt.ylabel('y(m)', fontsize=20)
+        plt.ylim(0, self.world.height)
+        plt.xlim(0, self.world.width)
         for i in range(len(trajectory) - 1, -1, -1):
             # plot the vehicle
             edge = trajectory[i]
@@ -308,7 +337,9 @@ class Planner(object):
                 c_point = edge.ptg.get_cpoint_at_d(d, edge.k)
                 current_pose = start_pose + c_point.pose
                 vehicle.phi = c_point.phi
-                vehicle.plot(ax, current_pose, self.world, color)
+                #ATTENTION: this may not work, I have commented the function
+                #vehicle.plot(ax, current_pose, self.world, color)
+                vehicle.plot(ax, current_pose, color)
 
                 title = r'$x={0:.1f},y={1:.1f},\theta={2:+.1f}^\circ,\phi={3:+.1f}^\circ, v={4:+.1f}, \omega={5:+.1f}, \alpha={6:+.1f}^\circ$'.format(
                     current_pose.x,
@@ -321,7 +352,9 @@ class Planner(object):
 
                 fig.suptitle(title)
                 if goal is not None:
-                    ax.plot(self.world.x_to_ix(goal.x), self.world.y_to_iy(goal.y), '+r')
+                    #ax.plot(self.world.x_to_ix(goal.x), self.world.y_to_iy(goal.y), '+r')
+                    ax.plot(goal.x, goal.y, '+r')
+
                 print('Saving frame {0}'.format(frame))
                 plt.savefig('{0}{1:04d}.png'.format(file_name, frame))
                 # clear the figure for next drawing
@@ -330,9 +363,19 @@ class Planner(object):
 
     def solution_to_csv(self, file_name='solution.csv'):
         import csv
+        import os.path
         child_node = self.tree.nodes[-1]
         trajectory = []  # type #: List[Edge]
         solution_length = 0.0
+        file_name_root = file_name
+
+        # save the solution in a different file if the file already exist and numerate them
+        # TODO: really dirty way of doing it as it will check for all the files, fix this!
+        cnt = 0
+        while os.path.exists(file_name):
+            cnt = cnt + 1
+            file_name = ('{0}{1:04d}.csv'.format(file_name_root, cnt))
+
         while True:
             parent_node = child_node.parent
             if parent_node is None:

@@ -126,6 +126,23 @@ class ArticulatedVehicle(object):
             (self.tractor_l / 2 + self.link_l) * w / (self.trailer_l / 2)) * cos(pose.phi) - w)
         return final_pose
 
+
+    def plot(self, axes, pose, color='b'):
+        vertices = self.get_vertices_at_pose(pose)
+        for j in range(len(vertices) - 1):
+            a = vertices[j]
+            b = vertices[j + 1]
+            axes.plot([a.x, b.x], [a.y, b.y], color)
+
+        a = vertices[3]
+        b = vertices[0]
+        axes.plot([a.x, b.x], [a.y, b.y], color)
+
+        a = vertices[9]
+        b = vertices[6]
+        axes.plot([a.x, b.x], [a.y, b.y], color)
+
+"""" # this function should not be necessary anymore !
     def plot(self, axes, pose, world: WorldGrid, color='b'):
         vertices = self.get_vertices_at_pose(pose)
         for j in range(len(vertices) - 1):
@@ -155,7 +172,7 @@ class ArticulatedVehicle(object):
             ia = PointR2(world.x_to_ix(a.x), world.y_to_iy(a.y))
             ib = PointR2(world.x_to_ix(b.x), world.y_to_iy(b.y))
             axes.plot([ia.x, ib.x], [ia.y, ib.y], color)
-
+            """
 
 class ArticulatedVehicleB(ArticulatedVehicle):
     def __init__(self, config: dict):
