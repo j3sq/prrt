@@ -134,18 +134,18 @@ class WorldGrid(object):
     def __init__(self, map_file: str, width: float, height: float):
         file_path = Path(map_file)
         assert file_path.exists(), FileExistsError
-        map_32bit = mpimg.imread(map_file)
+        self.map_32bit = mpimg.imread(map_file)
         self.min_ix = 0
         self.min_iy = 0
-        self.max_ix = map_32bit.shape[1] - 1
-        self.max_iy = map_32bit.shape[0] - 1
+        self.max_ix = self.map_32bit.shape[1] - 1
+        self.max_iy = self.map_32bit.shape[0] - 1
         self.iwidth = self.max_ix - self.min_ix + 1
         self.iheight = self.max_iy - self.min_iy + 1
         self.width = width
         self.height = height
         self.x_resolution = self.width / self.iwidth
         self.y_resolution = self.height / self.iheight
-        map8bit = (np.dot(map_32bit[..., :3], [1, 1, 1]))
+        map8bit = (np.dot(self.map_32bit[..., :3], [1, 1, 1]))
         self.omap = (map8bit < 1.5)
         self._obstacle_buffer = []  # type: List[PointR2]
 
