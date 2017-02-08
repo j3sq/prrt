@@ -79,28 +79,39 @@ class Tree(object):
         self._edges.append(edge)
         parent.edges_to_child.append(edge)
 
-    def plot_nodes(self, world: WorldGrid, goal: PointR2 = None, file_name=None):
+    def plot_nodes(self, world: WorldGrid, goal: PointR2 = None, goal_dist_tolerance=1.0, file_name=None ):
         import os.path
-        file_name_root = './out/tree.png'
-        file_name = file_name_root
+        file_name_root_eps = './out/tree.eps'
+        file_name_root_png = './out/tree.png'
+        file_name_png = file_name_root_png
+        file_name_eps = file_name_root_eps
 
         # save the solution in a different file if the file already exist and numerate them
         # TODO: really dirty way of doing it as it will check for all the files, fix this!
         cnt = 0
-        while os.path.exists(file_name):
+        while os.path.exists(file_name_png):
             cnt = cnt + 1
-            file_name = ('{0}{1:04d}.png'.format(file_name_root, cnt))
+            file_name_png = ('{0}{1:04d}.png'.format(file_name_root_png, cnt))
+
+        cnt = 0
+        while os.path.exists(file_name_eps):
+            cnt = cnt + 1
+            file_name_eps = ('{0}{1:04d}.eps'.format(file_name_root_eps, cnt))
 
         fig, ax = plt.subplots()
         #ax.matshow(world.omap, cmap=plt.cm.gray_r, origin='upper', interpolation='none')
         # instead of showing image first and then the
-        map = np.fliplr(world.omap)
-        ax.imshow(map, cmap=plt.cm.gray_r, origin='upper', interpolation='none',
+        map = np.fliplr(world.map_32bit)
+        #map = world.map_32bit
+        ax.imshow(map, #cmap=plt.cm.gray_r, interpolation='none', #origin='upper',
                   extent=(world.width, 0.0, world.height, 0.0), zorder=-1)
         plt.xlabel('x(m)', fontsize=20)
         plt.ylabel('y(m)', fontsize=20)
         plt.ylim(0, world.height)
         plt.xlim(0, world.width)
+
+        circle = plt.Circle((goal.x, goal.y), goal_dist_tolerance, color='red', fill=False)
+        ax.add_artist(circle)
         for node in self.nodes:
             x = node.pose.x #world.x_to_ix(node.pose.x)
             y = node.pose.y #world.y_to_iy(node.pose.y)
@@ -108,10 +119,16 @@ class Tree(object):
         if goal is not None:
             ax.plot(goal.x, goal.y, '+r')
             #ax.plot(world.x_to_ix(goal.x), world.y_to_iy(goal.y), '+r')
-        if file_name is None:
-            plt.savefig(file_name)
+        # save png
+        if file_name_png is None:
+            plt.savefig(file_name_png)
         else:
-            plt.savefig(file_name)
+            plt.savefig(file_name_png, format='png', dpi=150, bbox_inches='tight', pad_inches=0.1)
+        # save eps
+        if file_name_eps is None:
+            plt.savefig(file_name_eps)
+        else:
+            plt.savefig(file_name_eps, format='eps', dpi=150, bbox_inches='tight', pad_inches=0.1)
             # plt.show()
 
 
@@ -226,7 +243,7 @@ class Planner(object):
                 d_new = min(d_max, d_rand)
                 if debug_tree_state > 0 and counter % debug_tree_state == 0:
                     self.tree.plot_nodes(self.world, ptg_nearest_pose,
-                                         '{0}{1:04d}.png'.format(debug_tree_state_file, counter))
+                                         '{0}{1:04d}.png'.format(debug_tree_state_file, counter) )
                 # Skip if the current ptg and alpha (k_ran) can't reach this point
                 if ptg.cpoints[k_rand][-1].d < d_new:
                     #print('Node leads to invalid trajectory. Node Skipped!')
@@ -266,17 +283,19 @@ class Planner(object):
                 #print('new node added to tree from ptg {0}'.format(best_edge.ptg.name))
                 goal_dist = best_edge.end_pose.distance_2d(goal_pose)
                 print("New note : ", new_state_node.pose)
-                print ("Goal distance : ", goal_dist)
+                print("Goal distance of the current node : ", goal_dist)
                 goal_ang = abs(helper.angle_distance(best_edge.end_pose.theta, goal_pose.theta))
                 is_acceptable_goal = goal_dist < goal_dist_tolerance and goal_ang < goal_ang_tolerance
                 min_goal_dist_yet = min(goal_dist, min_goal_dist_yet)
+                print("Best Goal distance : ", min_goal_dist_yet)
                 if is_acceptable_goal:
                     print('goal reached!')
                     break
                     # To do: continue running to refine solution
                 print("Counter = ",counter, "   Number of nodes :", len(self.tree.nodes))
-        print('Done in {0:.2f} seconds'.format(time.time() - start_time))
         self.solving_time = time.time() - start_time
+        print('Done in {0:.2f} seconds'.format(time.time() - start_time))
+        #self.solving_time = time.time() - start_time
         print('Minimum distance to goal reached is {0}'.format(min_goal_dist_yet))
         if not is_acceptable_goal:
             print('Solution not found within iteration limit')
@@ -290,7 +309,7 @@ class Planner(object):
             if self.config['csv_out_file'] != '':
                 self.solution_to_csv(self.config['csv_out_file'])
             if self.config['plot_tree_file'] != '':
-                self.tree.plot_nodes(self.world, goal_pose, self.config['plot_tree_file'])
+                self.tree.plot_nodes(self.world, goal_pose, self.config['goal_dist_tolerance'], self.config['plot_tree_file'])
             if self.config['plot_solution'] != '':
                 self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
             return
@@ -304,7 +323,7 @@ class Planner(object):
         if self.config['csv_out_file'] != '':
             self.solution_to_csv(self.config['csv_out_file'])
         if self.config['plot_tree_file'] != '':
-            self.tree.plot_nodes(self.world, goal_pose, self.config['plot_tree_file'])
+            self.tree.plot_nodes(self.world, goal_pose, self.config['goal_dist_tolerance'], self.config['plot_tree_file'])
         if self.config['plot_solution'] != '':
             self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
 
@@ -318,16 +337,22 @@ class Planner(object):
             trajectory.append(self.get_trajectory_edge(parent_node, child_node))
             child_node = parent_node
         fig, ax = plt.subplots()
+        plt.autoscale(tight=True)
+
         frame = 0
         #ax.matshow(self.world.omap, cmap=plt.cm.gray_r, origin='lower')
         # instead of showing image first and then the
-        map = np.fliplr(self.world.omap)
-        ax.imshow(map, cmap=plt.cm.gray_r, origin='upper', interpolation='none',
+        map = np.fliplr(self.world.map_32bit)
+        #map = self.world.map_32bit
+        ax.imshow(map, #cmap=plt.cm.gray_r,# origin='upper', interpolation='none',
                   extent=(self.world.width, 0.0, self.world.height, 0.0), zorder=-1)
         plt.xlabel('x(m)', fontsize=20)
         plt.ylabel('y(m)', fontsize=20)
         plt.ylim(0, self.world.height)
         plt.xlim(0, self.world.width)
+        circle = plt.Circle((goal.x, goal.y), self.config['goal_dist_tolerance'], color='red', fill=False)
+        ax.add_artist(circle)
+
         for i in range(len(trajectory) - 1, -1, -1):
             # plot the vehicle
             edge = trajectory[i]
@@ -349,14 +374,13 @@ class Planner(object):
                     c_point.v,
                     c_point.w,
                     deg(c_point.alpha))
-
-                fig.suptitle(title)
+                fig.suptitle(title, x=0.5, y=1.0)
                 if goal is not None:
                     #ax.plot(self.world.x_to_ix(goal.x), self.world.y_to_iy(goal.y), '+r')
                     ax.plot(goal.x, goal.y, '+r')
 
                 print('Saving frame {0}'.format(frame))
-                plt.savefig('{0}{1:04d}.png'.format(file_name, frame))
+                plt.savefig('{0}{1:04d}.png'.format(file_name, frame), dpi=200) #, bbox_inches='tight', pad_inches=0.2)
                 # clear the figure for next drawing
                 ax.lines = []
                 frame += 1
