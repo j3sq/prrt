@@ -50,7 +50,8 @@ def main():
                                   number_of_iterations,
                                   total_number_of_nodes,
                                   best_path_length,
-                                  best_distance_to_target)
+                                  best_distance_to_target,
+                                  solving_time)
             print("Finish, building statistics")
         else:
             print_help()
@@ -98,7 +99,7 @@ def print_help():
     print('     Arguments:')
     print('       1: planner configuration file')
     print('       2: number of iterations')
-    print('     Example: python planner_runner.py 1 ./config/planner.yaml 100')
+    print('     Example: python planner_runner.py 2 ./config/planner.yaml 100')
 
 if __name__ == "__main__":
     main()
