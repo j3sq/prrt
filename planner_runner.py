@@ -16,7 +16,7 @@ def main():
             planner_config_file = sys.argv[2]
             with open(planner_config_file) as f:
                 planner_config = yaml.load(f)
-            planner = Planner(planner_config)
+            #planner = Planner(planner_config)
         else:
             print_help()
             return
@@ -35,6 +35,7 @@ def main():
                 csv_writer.writerow(['success','number_of_iterations', 'total_number_of_nodes', 'best_path_length', 'best_distance_to_target'])
             # starting iterations
             for i in range(0, n_iterations):
+                planner = Planner(planner_config)
                 print ("Solving iteration number ", i)
                 solve(planner)
                 success, number_of_iterations, total_number_of_nodes, best_path_length, best_distance_to_target, solving_time = planner.getResults()
@@ -53,6 +54,8 @@ def main():
                                   best_distance_to_target,
                                   solving_time)
             print("Finish, building statistics")
+            del planner
+
         else:
             print_help()
     except:
