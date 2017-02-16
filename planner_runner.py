@@ -30,7 +30,7 @@ def main():
             print("The planner will run ", n_iterations, " times, to build statistics, this will take a while !")
             #create the file for the statistics and add an header to the first line
             import csv
-            with open('stats.csv', 'w', newline='') as csvfile:
+            with open('.\out\stats.csv', 'w', newline='') as csvfile:
                 csv_writer = csv.writer(csvfile, delimiter=',')
                 csv_writer.writerow(['success','number_of_iterations', 'total_number_of_nodes', 'best_path_length', 'best_distance_to_target'])
             # starting iterations
@@ -70,7 +70,7 @@ def main():
 def solve(planner: Planner):
     planner.solve()
 
-def statistics_to_csv(file_name='stats.csv',
+def statistics_to_csv(file_name='.\out\stats.csv',
                       success=False,
                       number_of_iterations=0,
                       total_number_of_nodes=0,

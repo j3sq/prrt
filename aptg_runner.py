@@ -78,7 +78,8 @@ def trace_trajectory_at_phi_alpha(aptg: APTG, init_phi: float, alpha: float):
     for cpoint in cpoints_at_alpha:
         frame += 1
 
-        aptg.vehicle.plot(ax, cpoint.pose, None)
+        #aptg.vehicle.plot(ax, cpoint.pose, None)
+        aptg.vehicle.plot(ax, cpoint.pose, 'b')
         ax.title.set_text(
             r'Trajectory at $\phi_i = {0:.1f}^\circ, \alpha = {1:.1f}^\circ$ '.format(deg(init_phi), deg(alpha)))
         plt.savefig('./out/{0}_{1:04d}.png'.format(name, frame))

@@ -310,8 +310,8 @@ class Planner(object):
                 self.solution_to_csv(self.config['csv_out_file'])
             if self.config['plot_tree_file'] != '':
                 self.tree.plot_nodes(self.world, goal_pose, self.config['goal_dist_tolerance'], self.config['plot_tree_file'])
-            if self.config['plot_solution'] != '':
-                self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
+            #if self.config['plot_solution'] != '':
+            #   self.trace_solution(self.aptgs[0].vehicle, goal_pose, self.config['plot_solution'])
             return
         # set parameters to get results
         self.planner_success = True
@@ -374,7 +374,7 @@ class Planner(object):
                     c_point.v,
                     c_point.w,
                     deg(c_point.alpha))
-                fig.suptitle(title, x=0.5, y=1.0)
+                #fig.suptitle(title, x=0.5, y=1.0)
                 if goal is not None:
                     #ax.plot(self.world.x_to_ix(goal.x), self.world.y_to_iy(goal.y), '+r')
                     ax.plot(goal.x, goal.y, '+r')
@@ -427,3 +427,17 @@ class Planner(object):
         for edge in parent.edges_to_child:
             if edge.end_pose == child.pose:
                 return edge
+
+    def __del__(self):
+        del self.aptgs  # Type:List[APTG]
+        del self.world   # type: WorldGrid
+        del self.init_pose   # type: PoseR2S2
+        del self.goal_pose   # type: PoseR2S2
+        del self.tree   # type: Tree
+        del self.config
+        del self.planner_success
+        del self.total_number_of_iterations
+        del self.total_number_of_nodes
+        del self.best_path_length
+        del self.best_distance_to_target
+        del self.solving_time

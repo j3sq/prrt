@@ -92,10 +92,14 @@ class ArticulatedVehicle(object):
 
     def _sim_move_reverse(self, pose: PoseR2S2, v: float, w: float, dt: float):
         # Transform to simulated car pulling the trailer backwards
-        x_rev = pose.x - (self.trailer_l / 2.) * cos(pose.theta) - \
-                (self.tractor_l / 2 + self.link_l) * cos(pose.theta + pose.phi)
-        y_rev = pose.y - (self.trailer_l / 2) * sin(pose.theta) - \
-                (self.tractor_l / 2 + self.link_l) * sin(pose.theta + pose.phi)
+        #x_rev = pose.x - (self.trailer_l / 2.) * cos(pose.theta) - \
+        #        (self.tractor_l / 2 + self.link_l) * cos(pose.theta + pose.phi)
+        #y_rev = pose.y - (self.trailer_l / 2) * sin(pose.theta) - \
+        #        (self.tractor_l / 2 + self.link_l) * sin(pose.theta + pose.phi)
+        x_rev = pose.x - (self.trailer_l) * cos(pose.theta) - \
+                (self.tractor_l + self.link_l) * cos(pose.theta + pose.phi)
+        y_rev = pose.y - (self.trailer_l) * sin(pose.theta) - \
+                (self.tractor_l + self.link_l) * sin(pose.theta + pose.phi)
         theta_rev = pose.theta + pose.phi + PI
         phi_rev = -pose.phi
 
@@ -103,17 +107,23 @@ class ArticulatedVehicle(object):
         x_rev += v * dt * cos(theta_rev)
         y_rev += v * dt * sin(theta_rev)
         theta_rev += dt * w
-        phi_rev += dt * ((v / (self.trailer_l / 2)) * sin(phi_rev) - (
-            (self.tractor_l / 2 + self.link_l) * w / (self.trailer_l / 2)) * cos(phi_rev) - w)
+        #phi_rev += dt * ((v / (self.trailer_l / 2)) * sin(phi_rev) - (
+        #    (self.tractor_l / 2 + self.link_l) * w / (self.trailer_l / 2)) * cos(phi_rev) - w)
+        phi_rev += dt * ((v / (self.trailer_l)) * sin(phi_rev) - (
+            (self.tractor_l + self.link_l) * w / (self.trailer_l)) * cos(phi_rev) - w)
 
         # Transform back
         new_pose = PoseR2S2()
         new_pose.phi = - phi_rev
         new_pose.theta = theta_rev - new_pose.phi - PI
-        new_pose.x = x_rev + (self.trailer_l / 2.) * cos(new_pose.theta) + \
-                     (self.tractor_l / 2 + self.link_l) * cos(new_pose.theta + new_pose.phi)
-        new_pose.y = y_rev + (self.trailer_l / 2) * sin(new_pose.theta) + \
-                     (self.tractor_l / 2 + self.link_l) * sin(new_pose.theta + new_pose.phi)
+        #new_pose.x = x_rev + (self.trailer_l / 2.) * cos(new_pose.theta) + \
+        #             (self.tractor_l / 2 + self.link_l) * cos(new_pose.theta + new_pose.phi)
+        #new_pose.y = y_rev + (self.trailer_l / 2) * sin(new_pose.theta) + \
+        #             (self.tractor_l / 2 + self.link_l) * sin(new_pose.theta + new_pose.phi)
+        new_pose.x = x_rev + (self.trailer_l) * cos(new_pose.theta) + \
+                     (self.tractor_l + self.link_l) * cos(new_pose.theta + new_pose.phi)
+        new_pose.y = y_rev + (self.trailer_l) * sin(new_pose.theta) + \
+                     (self.tractor_l + self.link_l) * sin(new_pose.theta + new_pose.phi)
 
         return new_pose
 
@@ -122,8 +132,10 @@ class ArticulatedVehicle(object):
         final_pose.x = pose.x + v * dt * cos(pose.theta)
         final_pose.y = pose.y + v * dt * sin(pose.theta)
         final_pose.theta = pose.theta + w * dt
-        final_pose.phi = pose.phi - dt * ((v / (self.trailer_l / 2)) * sin(pose.phi) - (
-            (self.tractor_l / 2 + self.link_l) * w / (self.trailer_l / 2)) * cos(pose.phi) - w)
+        #final_pose.phi = pose.phi - dt * ((v / (self.trailer_l / 2)) * sin(pose.phi) - (
+        #    (self.tractor_l / 2 + self.link_l) * w / (self.trailer_l / 2)) * cos(pose.phi) - w)
+        final_pose.phi = pose.phi - dt * ((v / (self.trailer_l)) * sin(pose.phi) - (
+            (self.tractor_l + self.link_l) * w / (self.trailer_l)) * cos(pose.phi) - w)
         return final_pose
 
 

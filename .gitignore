@@ -1,6 +1,9 @@
 # solution frames and movies
 out/
 
+# packages to be built
+jar/*
+
 # PyCharm directory
 .idea/
 
